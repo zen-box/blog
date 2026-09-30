@@ -1,0 +1,14 @@
+.git
+.next
+node_modules
+data
+.e2e-data
+.claude
+*.log
+.env
+.env.*
+!.env.example
+Dockerfile
+docker-compose.yml
+Caddyfile
+备份

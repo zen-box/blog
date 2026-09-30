@@ -1,0 +1,7 @@
+.next
+node_modules
+data
+.e2e-data
+drizzle/meta
+package-lock.json
+备份

@@ -1,0 +1,104 @@
+/*
+ * 页面切换（React <ViewTransition> + 浏览器 View Transitions API）
+ * 旧内容快速离场、新内容柔和进场；封面与标题作为共享元素变形。
+ */
+
+/* 过渡期间不吞掉点击 */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 240ms;
+  animation-timing-function: ease;
+}
+
+/* 页面主体 */
+::view-transition-old(.page-exit) {
+  animation: 160ms ease-out both vt-fade-out;
+}
+::view-transition-new(.page-enter) {
+  animation: 620ms cubic-bezier(0.16, 1, 0.3, 1) 90ms both vt-rise;
+}
+
+/* 共享元素：封面图（裁切成 cover，保持圆角） */
+::view-transition-group(.morph) {
+  animation-duration: 620ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: clip;
+  border-radius: 1rem;
+}
+::view-transition-old(.morph),
+::view-transition-new(.morph) {
+  height: 100%;
+  object-fit: cover;
+  animation-duration: 620ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 共享元素：标题文字 */
+::view-transition-group(.morph-text) {
+  animation-duration: 580ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+/*
+ * 文字截图按宽度等比缩放（浏览器默认行为），呈现“标题长大”的效果。
+ * 新旧标题的换行可能不同：旧的快速淡出、新的稍后淡入，避免残影。
+ */
+::view-transition-old(.morph-text) {
+  animation: 220ms ease-out both vt-fade-out;
+}
+::view-transition-new(.morph-text) {
+  animation: 320ms ease-out 70ms both vt-fade-in;
+}
+
+/* 同一路由内容切换（分页、标签筛选） */
+::view-transition-old(.swap-out) {
+  animation: 160ms ease-in both vt-fade-out;
+}
+::view-transition-new(.swap-in) {
+  animation: 460ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both vt-rise-sm;
+}
+
+/* 主题切换：由 JS 驱动圆形扩散，这里关掉默认的交叉淡化 */
+html.theme-transition::view-transition-old(root),
+html.theme-transition::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html.theme-transition::view-transition-new(root) {
+  z-index: 2;
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes vt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+@keyframes vt-rise-sm {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

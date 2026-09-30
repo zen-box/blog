@@ -1,0 +1,38 @@
+# 部署：复制 .env.example 为 .env 并填写域名，然后 docker compose up -d --build
+services:
+  blog:
+    build:
+      context: .
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+    restart: unless-stopped
+    environment:
+      SITE_URL: https://${SITE_DOMAIN}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+    volumes:
+      # 数据库与上传的文件都在这里，备份这个目录即可
+      - ./data:/data
+    # 已经有 Nginx / 宝塔 / 1Panel 等反向代理时：删除下面的 caddy 服务，改为暴露端口
+    # ports:
+    #   - "127.0.0.1:3000:3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - blog
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/uploads:/srv/uploads:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

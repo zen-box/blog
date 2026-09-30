@@ -1,0 +1,25 @@
+# Caddy 会自动为域名申请并续期 HTTPS 证书
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# 本地磁盘上的上传文件直接由 Caddy 读取，不经过 Node；
+	# 存放在 S3 的文件本地不存在，交给博客处理（跳转到公开地址或转发）
+	@localUpload {
+		path /uploads/*
+		file {
+			root /srv
+		}
+	}
+	handle @localUpload {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		header X-Content-Type-Options nosniff
+		@svg path *.svg
+		header @svg Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+		file_server
+	}
+
+	handle {
+		reverse_proxy blog:3000
+	}
+}

@@ -1,0 +1,266 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "../styles/prose.css";
+@import "../styles/transitions.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * 配色：宣纸 · 黛蓝
+ * 中性色是温暖的纸张与墨色；品牌色由 --hue 驱动（OKLCH），
+ * 后台调整色相后，明暗两套配色都会自动推导。
+ */
+:root {
+  --hue: 254;
+
+  --brand: oklch(0.468 0.097 var(--hue));
+  --brand-hover: oklch(0.42 0.1 var(--hue));
+  --brand-soft: oklch(0.935 0.018 var(--hue));
+  --brand-foreground: #ffffff;
+  --ochre: #c9a15f;
+
+  --fg-body: #33302b;
+  --subtle: #9a948a;
+  --code-bg: #f2eee6;
+  --paper-grain: 0.035;
+
+  --background: #f7f4ee;
+  --foreground: #1f1d1a;
+  --card: #fffdf9;
+  --card-foreground: #1f1d1a;
+  --popover: #fffdf9;
+  --popover-foreground: #1f1d1a;
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+  --secondary: #efeae0;
+  --secondary-foreground: #1f1d1a;
+  --muted: #efeae0;
+  --muted-foreground: #6e685e;
+  --accent: #ebe5d9;
+  --accent-foreground: #1f1d1a;
+  --destructive: #b8432f;
+  --border: #e4ddd1;
+  --input: #ddd5c7;
+  --ring: oklch(0.468 0.097 var(--hue) / 0.45);
+
+  --chart-1: var(--brand);
+  --chart-2: #c9a15f;
+  --chart-3: #3e7355;
+  --chart-4: #b8432f;
+  --chart-5: #7b6aa8;
+
+  --radius: 0.625rem;
+
+  --sidebar: #f2eee6;
+  --sidebar-foreground: #1f1d1a;
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8e1d3;
+  --sidebar-accent-foreground: #1f1d1a;
+  --sidebar-border: #e4ddd1;
+  --sidebar-ring: var(--ring);
+
+  --shadow-color: 32 25% 25%;
+  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.06);
+  --shadow-md:
+    0 1px 2px hsl(var(--shadow-color) / 0.05), 0 6px 20px -4px hsl(var(--shadow-color) / 0.12);
+  --shadow-lg:
+    0 2px 6px hsl(var(--shadow-color) / 0.06), 0 20px 48px -12px hsl(var(--shadow-color) / 0.22);
+
+  --header-h: 4rem;
+}
+
+.dark {
+  --brand: oklch(0.732 0.081 var(--hue));
+  --brand-hover: oklch(0.79 0.075 var(--hue));
+  --brand-soft: oklch(0.3 0.035 var(--hue));
+  --brand-foreground: #16171b;
+  --ochre: #c9a56a;
+
+  --fg-body: #d8d4cc;
+  --subtle: #6f6b64;
+  --code-bg: #1b1c21;
+  --paper-grain: 0.05;
+
+  --background: #16171b;
+  --foreground: #e9e6df;
+  --card: #1d1f24;
+  --card-foreground: #e9e6df;
+  --popover: #1f2126;
+  --popover-foreground: #e9e6df;
+  --secondary: #25272d;
+  --secondary-foreground: #e9e6df;
+  --muted: #25272d;
+  --muted-foreground: #9a958b;
+  --accent: #2a2c33;
+  --accent-foreground: #e9e6df;
+  --destructive: #e57a62;
+  --border: #2d3037;
+  --input: #363941;
+  --ring: oklch(0.732 0.081 var(--hue) / 0.5);
+
+  --chart-2: #c9a56a;
+  --chart-3: #86c09b;
+  --chart-4: #e57a62;
+  --chart-5: #a996d6;
+
+  --sidebar: #1a1b20;
+  --sidebar-foreground: #e9e6df;
+  --sidebar-primary-foreground: #16171b;
+  --sidebar-accent: #25272d;
+  --sidebar-accent-foreground: #e9e6df;
+  --sidebar-border: #2a2c33;
+
+  --shadow-color: 220 40% 2%;
+  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.4);
+  --shadow-md:
+    0 1px 2px hsl(var(--shadow-color) / 0.35), 0 8px 24px -6px hsl(var(--shadow-color) / 0.55);
+  --shadow-lg:
+    0 2px 6px hsl(var(--shadow-color) / 0.4), 0 24px 56px -12px hsl(var(--shadow-color) / 0.7);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-ochre: var(--ochre);
+  --color-fg-body: var(--fg-body);
+  --color-subtle: var(--subtle);
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  --font-serif: "Noto Serif SC Variable", "Source Han Serif SC", "Songti SC", "STSong", serif;
+  --font-mono: "JetBrains Mono Variable", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-heading: var(--font-serif);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --shadow-soft: var(--shadow-md);
+  --shadow-float: var(--shadow-lg);
+
+  /* 动效令牌 */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-padding-top: calc(var(--header-h) + 1.5rem);
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--brand) 22%, transparent);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* 细滚动条 */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--foreground) 18%, transparent) transparent;
+  }
+}
+
+@utility text-balance-cjk {
+  text-wrap: balance;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+@utility container-page {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= 48rem) {
+    padding-inline: 2rem;
+  }
+}
+
+@utility container-read {
+  width: 100%;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= 48rem) {
+    padding-inline: 2rem;
+  }
+}
+
+/* 宣纸质感：极淡的噪点纹理，只出现在页面底色上 */
+.paper-grain {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--paper-grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.22 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.dark .paper-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
