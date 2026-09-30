@@ -1,6 +1,8 @@
-# 部署：复制 .env.example 为 .env 并填写域名，然后 docker compose up -d --build
+# 部署：复制 .env.example 为 .env 并填写域名，然后 docker compose up -d
+# 默认拉取 GitHub Actions 构建好的镜像；想在服务器上从源码构建，改用 docker compose up -d --build
 services:
   blog:
+    image: ghcr.io/zen-box/blog:${BLOG_VERSION:-latest}
     build:
       context: .
       args:

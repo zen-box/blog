@@ -1,0 +1,43 @@
+# 推送版本标签后自动构建 Docker 镜像（amd64 + arm64），发布到 ghcr.io/<所有者>/<仓库名>
+#
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# 生成的镜像标签：0.1.0、0.1、latest；预发布版本（如 v0.2.0-beta.1）只生成 0.2.0-beta.1，不更新 latest。
+# 也可以在 Actions 页面手动运行：选择标签时与推送标签相同；选择分支时生成与分支同名的标签（如 main）。
+name: Docker 镜像
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Docker 官方维护的可复用工作流：每个架构在对应的原生机器上构建（arm64 不走 QEMU 模拟，快很多），
+    # 再合并成一个多架构镜像，并附带签名的构建来源证明
+    uses: docker/github-builder/.github/workflows/build.yml@v1
+    permissions:
+      contents: read # 读取仓库代码
+      id-token: write # 用 GitHub OIDC 给构建证明签名
+      packages: write # 推送镜像到 ghcr.io
+    with:
+      output: image
+      push: true
+      platforms: linux/amd64,linux/arm64
+      meta-images: ghcr.io/${{ github.repository }}
+      meta-tags: |
+        type=semver,pattern={{version}}
+        type=semver,pattern={{major}}.{{minor}}
+        type=ref,event=branch
+      # 写入 OCI 标签：镜像会自动关联到本仓库，并记录版本与提交
+      set-meta-labels: true
+      set-meta-annotations: true
+    secrets:
+      registry-auths: |
+        - registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
