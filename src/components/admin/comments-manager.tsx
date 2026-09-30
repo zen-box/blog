@@ -20,6 +20,7 @@ import {
   replyCommentAction,
   setCommentStatusAction,
 } from "@/app/admin/actions";
+import { UserAvatar } from "@/components/site/user-avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ export type AdminComment = {
   isAdmin: boolean;
   createdAt: string;
   avatar: string;
+  avatarFallback: string;
   postTitle: string;
   postUrl: string;
 };
@@ -208,8 +210,12 @@ export function CommentsManager({
                     }
                     aria-label={`选择 ${c.author} 的评论`}
                   />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={c.avatar} alt="" className="size-9 shrink-0 rounded-full bg-muted" />
+                  <UserAvatar
+                    src={c.avatar}
+                    fallback={c.avatarFallback}
+                    alt=""
+                    className="size-9 shrink-0 rounded-full bg-muted"
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                       {c.url ? (

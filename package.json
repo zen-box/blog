@@ -1,6 +1,6 @@
 {
   "name": "blog",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,6 +26,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource-variable/noto-serif-sc": "^5.3.0",
     "@lezer/highlight": "^1.2.5",
+    "@multiavatar/multiavatar": "^1.0.7",
     "@shikijs/rehype": "^4.4.3",
     "@shikijs/transformers": "^4.4.3",
     "better-auth": "^1.7.6",

@@ -7,11 +7,12 @@ import { Reveal } from "@/components/motion/reveal";
 import { TimeAgo } from "@/components/post/time-ago";
 import { PageHeader } from "@/components/site/page-header";
 import { PageView } from "@/components/site/page-view";
+import { UserAvatar } from "@/components/site/user-avatar";
 import { Pagination } from "@/components/site/pagination";
 import { thumbUrl } from "@/lib/images";
 import { thumbhashToDataUrl } from "@/lib/markdown";
 import { getSettings } from "@/lib/settings";
-import { avatarUrl } from "@/server/comments";
+import { avatarFallback, avatarUrl } from "@/server/comments";
 import { withLinkCards } from "@/server/link-preview";
 import { listMoments } from "@/server/moments";
 import { resolveUploadUrl } from "@/server/storage";
@@ -26,7 +27,7 @@ export default async function MomentsPage({ searchParams }: PageProps<"/moments"
   if (page > result.pageCount) notFound();
   const avatar = s.authorAvatar
     ? resolveUploadUrl(s.authorAvatar)
-    : avatarUrl(s.social.email || null, 96);
+    : avatarUrl(s.social.email || null, 96, s.authorName);
 
   return (
     <PageView>
@@ -43,9 +44,9 @@ export default async function MomentsPage({ searchParams }: PageProps<"/moments"
               <li key={m.id} className="relative pb-8 last:pb-0">
                 <Reveal delay={Math.min(i, 5) * 0.05}>
                   <article className="flex gap-4">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <UserAvatar
                       src={avatar}
+                      fallback={avatarFallback(s.social.email || s.authorName)}
                       alt=""
                       width={40}
                       height={40}

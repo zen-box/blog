@@ -22,20 +22,23 @@ export default async function AdminCommentsPage({ searchParams }: PageProps<"/ad
       <CommentsManager
         status={status}
         counts={result.counts}
-        items={result.items.map(({ comment: c, postTitle, postSlug, postType, avatar }) => ({
-          id: c.id,
-          author: c.author,
-          email: c.email,
-          url: c.url,
-          ip: c.ip,
-          html: c.html,
-          status: c.status,
-          isAdmin: c.isAdmin,
-          createdAt: c.createdAt.toISOString(),
-          avatar,
-          postTitle,
-          postUrl: postType === "page" ? `/${postSlug}` : `/posts/${postSlug}`,
-        }))}
+        items={result.items.map(
+          ({ comment: c, postTitle, postSlug, postType, avatar, avatarFallback }) => ({
+            id: c.id,
+            author: c.author,
+            email: c.email,
+            url: c.url,
+            ip: c.ip,
+            html: c.html,
+            status: c.status,
+            isAdmin: c.isAdmin,
+            createdAt: c.createdAt.toISOString(),
+            avatar,
+            avatarFallback,
+            postTitle,
+            postUrl: postType === "page" ? `/${postSlug}` : `/posts/${postSlug}`,
+          }),
+        )}
       />
       <AdminPagination
         page={result.page}

@@ -3,6 +3,10 @@
 # ---------- 依赖 ----------
 FROM node:24-bookworm-slim AS deps
 WORKDIR /app
+# better-sqlite3 等原生模块需要 node-gyp 编译；slim 镜像不包含编译工具
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 # 国内服务器可以用镜像源加速：docker compose build --build-arg NPM_REGISTRY=https://registry.npmmirror.com
 ARG NPM_REGISTRY=https://registry.npmjs.org
 COPY package.json package-lock.json ./

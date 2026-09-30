@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { UserAvatar } from "@/components/site/user-avatar";
 import { cn } from "@/lib/utils";
 import type { PublicComment } from "@/server/comments";
 
@@ -222,9 +223,9 @@ function CommentItem({
           fresh.has(comment.id) && "animate-[comment-flash_2.4s_ease-out]",
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <UserAvatar
           src={comment.avatar}
+          fallback={comment.avatarFallback}
           alt=""
           width={isReply ? 32 : 40}
           height={isReply ? 32 : 40}

@@ -2,6 +2,7 @@ import "server-only";
 
 import crypto from "node:crypto";
 
+import multiavatar from "@multiavatar/multiavatar";
 import { and, asc, count, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -21,6 +22,7 @@ export type PublicComment = {
   author: string;
   url: string | null;
   avatar: string;
+  avatarFallback: string;
   html: string;
   isAdmin: boolean;
   createdAt: string;
@@ -28,21 +30,35 @@ export type PublicComment = {
   replies?: PublicComment[];
 };
 
-export function avatarUrl(email: string | null | undefined, size = 96): string {
-  const { comments: c, authorAvatar } = getSettings();
-  const mirror = c.avatarMirror.replace(/\/?$/, "/");
-  const hash = crypto
-    .createHash("md5")
-    .update((email ?? "").trim().toLowerCase())
-    .digest("hex");
-  if (!email && authorAvatar) return resolveUploadUrl(authorAvatar);
-  return `${mirror}${hash}?d=mp&s=${size}`;
+export function avatarFallback(seed: string): string {
+  const hash = crypto.createHash("md5").update(seed.trim().toLowerCase()).digest("hex");
+  return `data:image/svg+xml,${encodeURIComponent(multiavatar(hash))}`;
+}
+
+export function avatarUrl(email: string | null | undefined, size = 96, name = "访客"): string {
+  const normalized = email?.trim().toLowerCase();
+  if (!normalized) return avatarFallback(name);
+  const mirror = getSettings().comments.avatarMirror.replace(/\/?$/, "/");
+  const hash = crypto.createHash("md5").update(normalized).digest("hex");
+  return `${mirror}${hash}?d=404&s=${size}`;
 }
 
 type Row = typeof comments.$inferSelect;
 
-function toPublic(row: Row, byId: Map<number, Row>): PublicComment {
+function commentAvatar(row: Row, size = 96) {
   const s = getSettings();
+  return {
+    avatar:
+      row.isAdmin && s.authorAvatar
+        ? resolveUploadUrl(s.authorAvatar)
+        : avatarUrl(row.email, size, row.author),
+    avatarFallback: avatarFallback(
+      row.isAdmin ? s.social.email || s.authorName : row.email || row.author,
+    ),
+  };
+}
+
+function toPublic(row: Row, byId: Map<number, Row>): PublicComment {
   const parent = row.parentId ? byId.get(row.parentId) : undefined;
   return {
     id: row.id,
@@ -50,7 +66,7 @@ function toPublic(row: Row, byId: Map<number, Row>): PublicComment {
     rootId: row.rootId,
     author: row.author,
     url: row.url,
-    avatar: row.isAdmin && s.authorAvatar ? resolveUploadUrl(s.authorAvatar) : avatarUrl(row.email),
+    ...commentAvatar(row),
     html: row.html,
     isAdmin: row.isAdmin,
     createdAt: row.createdAt.toISOString(),
@@ -273,7 +289,7 @@ export function listCommentsAdmin(opts: {
     .groupBy(comments.status)
     .all();
   return {
-    items: items.map((i) => ({ ...i, avatar: avatarUrl(i.comment.email, 64) })),
+    items: items.map((i) => ({ ...i, ...commentAvatar(i.comment, 64) })),
     total,
     page,
     pageCount: Math.max(1, Math.ceil(total / pageSize)),

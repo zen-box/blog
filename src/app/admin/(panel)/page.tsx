@@ -13,6 +13,7 @@ import Link from "next/link";
 import { AdminPage, Panel } from "@/components/admin/admin-page";
 import { CountUp } from "@/components/admin/count-up";
 import { TrafficChart } from "@/components/admin/traffic-chart";
+import { UserAvatar } from "@/components/site/user-avatar";
 import { db, schema } from "@/db";
 import { formatCount, formatRelative } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
@@ -157,10 +158,14 @@ export default function DashboardPage() {
         >
           {comments.items.length ? (
             <ul className="divide-y divide-border/70">
-              {comments.items.map(({ comment: c, postTitle, avatar }) => (
+              {comments.items.map(({ comment: c, postTitle, avatar, avatarFallback }) => (
                 <li key={c.id} className="flex gap-3 px-5 py-3.5">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={avatar} alt="" className="size-8 shrink-0 rounded-full bg-muted" />
+                  <UserAvatar
+                    src={avatar}
+                    fallback={avatarFallback}
+                    alt=""
+                    className="size-8 shrink-0 rounded-full bg-muted"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 text-sm">
                       <span className="font-medium text-foreground">{c.author}</span>
