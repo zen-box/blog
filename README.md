@@ -4,7 +4,7 @@
 
 - **前台**：页面转场（封面与标题共享元素变形）、明暗模式圆形扩散切换、平滑滚动、阅读进度、悬浮目录、图片灯箱、全文搜索（⌘K / Ctrl K）、评论、点赞、归档时间线、分类标签、说说、友链、RSS、站点地图
 - **Markdown**：GFM、Shiki 代码高亮（标题 / 行号 / 高亮行 / diff / 聚焦 / 代码组）、KaTeX 公式、Mermaid 图表、提示框、折叠、标签页、脚注、图注与多图、B 站 / YouTube / 网易云嵌入、键盘按键、黑幕、徽章、注音等
-- **后台**：仪表盘与访问统计、所见即所得的分栏编辑器（实时预览、粘贴 / 拖入图片上传、草稿自动保存、本地备份）、定时发布、评论审核与回复、说说、友链申请、媒体库、站点设置（Logo 与网站图标、主题色、导航、社交、SMTP 邮件通知、备案信息）
+- **后台**：仪表盘与访问统计、所见即所得的分栏编辑器（实时预览、粘贴 / 拖入图片上传、草稿自动保存、本地备份）、定时发布、评论审核与回复、说说、友链申请、媒体库、站点设置（Logo 与网站图标、主题色、导航、社交、SMTP 邮件通知、备案信息）、账号安全（两步验证、登录设备管理、新登录邮件提醒）
 - **存储**：图片上传后自动转 WebP 并生成缩略图与模糊占位；可存本地，也可存到任意 S3 兼容存储（Garage、MinIO、Cloudflare R2、阿里云 OSS、腾讯云 COS、AWS S3），支持一键迁移
 - **部署**：SQLite 单文件数据库，数据全部在 `data/` 目录，一个容器即可运行
 
@@ -30,7 +30,7 @@ npm install
 npm run dev
 ```
 
-打开 <http://localhost:3000>，后台在 <http://localhost:3000/admin>。首次进入后台会要求创建管理员账号（只能创建一个），同时会放入一篇《Markdown 语法指南》草稿，打开它就能在编辑器里对照所有语法的实时效果。
+打开 <http://localhost:3000>，后台在 <http://localhost:3000/admin>。首次进入后台会要求创建管理员账号（只能创建一个），需要填写终端里打印的设置令牌；创建后会放入一篇《Markdown 语法指南》草稿，打开它就能在编辑器里对照所有语法的实时效果。
 
 想先看看效果，可以生成示例内容（仅在数据库为空时生效）：
 
@@ -57,7 +57,11 @@ Caddy 会自动申请和续期 HTTPS 证书。
    docker compose up -d --build
    ```
 
-4. 打开 `https://你的域名/admin` 创建管理员
+4. 打开 `https://你的域名/admin` 创建管理员。页面会要求填写设置令牌，它打印在日志里：
+
+   ```bash
+   docker compose logs blog | grep 设置令牌
+   ```
 
 国内服务器构建较慢时，在 `.env` 中取消注释 `NPM_REGISTRY=https://registry.npmmirror.com`；拉取镜像慢可以给 Docker 配置镜像加速。
 
@@ -109,15 +113,31 @@ SITE_URL=https://blog.example.com npm start
 | `data/blog.db`      | 数据库：文章、评论、设置等 |
 | `data/uploads/`     | 上传的图片与附件           |
 | `data/.auth-secret` | 自动生成的登录密钥         |
+| `data/.setup-token` | 创建管理员前的设置令牌     |
 
 - **备份**：后台「设置 → 高级」可以直接下载数据库；完整备份就是把整个 `data/` 目录打包
 - **迁移**：把 `data/` 复制到新服务器，启动即可
-- **忘记密码**：执行下面的命令删除管理员账号（文章等内容不受影响），再打开 `/admin` 重新创建
+- **忘记密码**：执行下面的命令删除管理员账号（文章等内容不受影响），它会打印新的设置令牌，再打开 `/admin` 重新创建
 
   ```bash
   docker compose exec blog node reset-admin.mjs   # Docker
   npm run reset-admin                              # 非 Docker
   ```
+
+- **丢了两步验证的手机，备用码也用完了**：加上 `--2fa` 只关闭两步验证，账号和密码不变
+
+  ```bash
+  docker compose exec blog node reset-admin.mjs --2fa   # Docker
+  npm run reset-admin -- --2fa                           # 非 Docker
+  ```
+
+## 账号安全
+
+- **设置令牌**：全新部署时，创建管理员需要填写设置令牌，防止别人抢在你之前打开 `/admin` 注册。令牌打印在服务器日志里，也保存在 `data/.setup-token`，管理员创建后自动作废；也可以用环境变量 `ADMIN_SETUP_TOKEN` 自己指定
+- **两步验证**：在「设置 → 账号与安全」开启，用任意 TOTP 应用（Google Authenticator、Microsoft Authenticator、1Password、Bitwarden 等）扫码。开启时会给出 10 个备用码，手机不在身边时可以代替动态码，每个只能用一次；登录时可以选择 30 天内信任当前设备
+- **登录设备**：「设置 → 登录设备」列出所有有效的登录（浏览器、系统、IP、时间），可以单独退出，也可以一键退出其他设备；修改密码后其他设备自动退出
+- **登录提醒**：配置好 SMTP 后，每次登录成功都会发邮件提醒，可以在「账号与安全」里关闭
+- **防暴力破解**：同一 IP 每分钟最多尝试登录 5 次；动态码每 10 秒最多 3 次、每轮登录最多试 5 次，连续失败 10 次后账号锁定 15 分钟
 
 ## 对象存储（S3 / Garage）
 
@@ -152,6 +172,7 @@ garage bucket website --allow blog   # 可选：需要公开访问地址时
 | `SITE_URL`             | 站点地址，例如 `https://blog.example.com`（Compose 中由 `SITE_DOMAIN` 自动生成） |
 | `DATA_DIR`             | 数据目录，默认项目下的 `data/`，容器内为 `/data`                                 |
 | `BETTER_AUTH_SECRET`   | 可选，登录密钥；不填会自动生成并保存                                             |
+| `ADMIN_SETUP_TOKEN`    | 可选，创建管理员时的设置令牌；不填会自动生成并打印在日志里                       |
 | `NEXT_PUBLIC_TIMEZONE` | 可选，显示时间所用的时区，默认 `Asia/Shanghai`，需在构建时设置                   |
 
 ## Markdown 速查
@@ -199,12 +220,12 @@ drizzle/                 数据库迁移
 
 ## 常用命令
 
-| 命令                                 | 说明                                   |
-| ------------------------------------ | -------------------------------------- |
-| `npm run dev`                        | 开发模式                               |
-| `npm run build` / `npm start`        | 构建 / 运行生产版本                    |
-| `npm run lint` / `npm run typecheck` | 代码检查 / 类型检查                    |
-| `npm run format`                     | 格式化代码                             |
-| `npm run db:generate`                | 修改 `src/db/schema.ts` 后生成迁移文件 |
-| `npm run seed:demo`                  | 生成示例内容                           |
-| `npm run reset-admin`                | 重置管理员账号                         |
+| 命令                                 | 说明                                        |
+| ------------------------------------ | ------------------------------------------- |
+| `npm run dev`                        | 开发模式                                    |
+| `npm run build` / `npm start`        | 构建 / 运行生产版本                         |
+| `npm run lint` / `npm run typecheck` | 代码检查 / 类型检查                         |
+| `npm run format`                     | 格式化代码                                  |
+| `npm run db:generate`                | 修改 `src/db/schema.ts` 后生成迁移文件      |
+| `npm run seed:demo`                  | 生成示例内容                                |
+| `npm run reset-admin`                | 重置管理员账号（`-- --2fa` 只关闭两步验证） |

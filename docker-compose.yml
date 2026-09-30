@@ -9,6 +9,7 @@ services:
     environment:
       SITE_URL: https://${SITE_DOMAIN}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+      ADMIN_SETUP_TOKEN: ${ADMIN_SETUP_TOKEN:-}
     volumes:
       # 数据库与上传的文件都在这里，备份这个目录即可
       - ./data:/data

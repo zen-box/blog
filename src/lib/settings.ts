@@ -125,6 +125,12 @@ export const siteSettingsSchema = z.object({
       enabled: z.boolean().default(false),
     })
     .prefault({}),
+  security: z
+    .object({
+      /** 每次成功登录后台时发邮件提醒（需要配置 SMTP） */
+      loginAlerts: z.boolean().default(true),
+    })
+    .prefault({}),
 });
 
 export type SiteSettings = z.infer<typeof siteSettingsSchema>;

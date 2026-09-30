@@ -18,6 +18,7 @@ import { normalizeSlug, slugify } from "@/lib/slug";
 import { createComment, deleteComment, setCommentStatus } from "@/server/comments";
 import { clearLinkPreviews } from "@/server/link-preview";
 import { deleteLink, saveLink, type LinkInput } from "@/server/links";
+import { listDevices, revokeDevices } from "@/server/security";
 import { mailConfigured, mailTemplate, sendMail } from "@/server/mail";
 import { deleteMedia, listMedia, localMediaCount, migrateBatchToS3 } from "@/server/media";
 import { deleteMoment, saveMoment, type MomentInput } from "@/server/moments";
@@ -344,4 +345,22 @@ export async function testMailAction(to: string) {
 
 export async function rerenderAllAction() {
   return run(() => rerenderAll());
+}
+
+/* ------------------------------- 登录设备 ------------------------------- */
+
+/** 退出其他设备（当前设备请用「退出登录」）；返回退出的数量 */
+export async function revokeDevicesAction(ids: string[] | "others") {
+  const { session } = await requireAdmin();
+  return run(() => {
+    const { userId, id: current } = session;
+    const targets =
+      ids === "others"
+        ? listDevices(userId, current).map((d) => d.id)
+        : z.array(z.string()).max(100).parse(ids);
+    return revokeDevices(
+      userId,
+      targets.filter((id) => id !== current),
+    );
+  }, false);
 }

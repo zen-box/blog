@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AuthScreen } from "@/components/admin/auth-screen";
 import { adminExists, getSession } from "@/lib/auth";
 import { getBrand } from "@/server/brand";
+import { announceSetupToken } from "@/server/security";
 
 export const metadata: Metadata = { title: "登录", robots: { index: false } };
 
@@ -20,5 +21,16 @@ export default async function LoginPage({ searchParams }: PageProps<"/admin/logi
   const session = await getSession();
   if (session) redirect(target);
 
-  return <AuthScreen mode={adminExists() ? "login" : "setup"} next={target} brand={getBrand()} />;
+  const setup = !adminExists();
+  // 初始化页面被打开时，把设置令牌再打印一次到服务器日志
+  if (setup) announceSetupToken();
+
+  return (
+    <AuthScreen
+      mode={setup ? "setup" : "login"}
+      next={target}
+      brand={getBrand()}
+      tokenFromEnv={!!process.env.ADMIN_SETUP_TOKEN}
+    />
+  );
 }

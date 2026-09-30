@@ -28,9 +28,28 @@ export const user = sqliteTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
   image: text("image"),
+  twoFactorEnabled: integer("two_factor_enabled", { mode: "boolean" }).notNull().default(false),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
+
+/** 两步验证：TOTP 密钥与备用码（均由 Better Auth 用站点密钥加密后存储） */
+export const twoFactor = sqliteTable(
+  "two_factor",
+  {
+    id: text("id").primaryKey(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backup_codes").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** 开启时要先用动态码验证一次，验证前为 false */
+    verified: integer("verified", { mode: "boolean" }).default(true),
+    failedVerificationCount: integer("failed_verification_count").default(0),
+    lockedUntil: integer("locked_until", { mode: "timestamp_ms" }),
+  },
+  (t) => [index("two_factor_user_idx").on(t.userId), index("two_factor_secret_idx").on(t.secret)],
+);
 
 export const session = sqliteTable(
   "session",

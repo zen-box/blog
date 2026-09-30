@@ -26,12 +26,12 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { authClient } from "@/lib/auth-client";
 import type { SiteSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
 import { ImageField } from "./image-field";
 import { LinkCardSettings } from "./link-card-settings";
+import { type AccountInfo, SecuritySettings } from "./security-settings";
 import { Row, Section } from "./settings-ui";
 import { StorageSettings } from "./storage-settings";
 
@@ -51,7 +51,8 @@ const SECTIONS = [
   { id: "storage", label: "存储" },
   { id: "linkcards", label: "链接卡片" },
   { id: "advanced", label: "高级" },
-  { id: "account", label: "账号" },
+  { id: "account", label: "账号与安全" },
+  { id: "devices", label: "登录设备" },
 ];
 
 const HUES = [
@@ -74,6 +75,7 @@ export function SettingsForm({
   s3Count,
   proxyEndpoint,
   linkPreviewCount,
+  account,
 }: {
   initial: SiteSettings;
   hasSmtpPass: boolean;
@@ -87,6 +89,7 @@ export function SettingsForm({
   iconUrl: string;
   localCount: number;
   s3Count: number;
+  account: AccountInfo;
 }) {
   const [s, setS] = useState(initial);
   const [saved, setSaved] = useState(initial);
@@ -664,7 +667,13 @@ export function SettingsForm({
           </Row>
         </Section>
 
-        <AccountSection />
+        <SecuritySettings
+          account={account}
+          security={s.security}
+          onSecurityChange={(v) => set("security", v)}
+          mailReady={mailReady}
+          issuer={saved.siteTitle}
+        />
       </div>
 
       <AnimatePresence>
@@ -701,66 +710,5 @@ export function SettingsForm({
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-function AccountSection() {
-  const [form, setForm] = useState({ current: "", next: "", confirm: "" });
-  const [pending, setPending] = useState(false);
-
-  async function change() {
-    if (form.next.length < 8) return toast.error("新密码至少 8 位");
-    if (form.next !== form.confirm) return toast.error("两次输入的新密码不一致");
-    setPending(true);
-    const { error } = await authClient.changePassword({
-      currentPassword: form.current,
-      newPassword: form.next,
-      revokeOtherSessions: true,
-    });
-    setPending(false);
-    if (error) return toast.error(error.message || "当前密码不正确");
-    setForm({ current: "", next: "", confirm: "" });
-    toast.success("密码已修改，其他设备已退出登录");
-  }
-
-  return (
-    <Section id="account" title="账号" description="修改密码后，其他设备上的登录会失效。">
-      <Row label="当前密码">
-        <Input
-          type="password"
-          autoComplete="current-password"
-          value={form.current}
-          onChange={(e) => setForm({ ...form, current: e.target.value })}
-        />
-      </Row>
-      <Row label="新密码">
-        <Input
-          type="password"
-          autoComplete="new-password"
-          value={form.next}
-          onChange={(e) => setForm({ ...form, next: e.target.value })}
-          placeholder="至少 8 位"
-        />
-      </Row>
-      <Row label="确认新密码">
-        <Input
-          type="password"
-          autoComplete="new-password"
-          value={form.confirm}
-          onChange={(e) => setForm({ ...form, confirm: e.target.value })}
-        />
-      </Row>
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={change}
-          disabled={pending || !form.current || !form.next}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-4 text-sm hover:bg-muted disabled:opacity-50"
-        >
-          {pending && <LoaderIcon className="size-3.5 animate-spin" />}
-          修改密码
-        </button>
-      </div>
-    </Section>
   );
 }
