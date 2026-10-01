@@ -3,23 +3,23 @@
 一个注重排版与动效的个人博客系统：Next.js 16 + SQLite，自带完整后台，一个容器即可部署。
 
 - **前台**：页面转场（封面与标题共享元素变形）、明暗模式圆形扩散切换、平滑滚动、阅读进度、悬浮目录、图片灯箱、全文搜索（⌘K / Ctrl K）、评论、点赞、归档时间线、分类标签、说说、友链、RSS、站点地图
-- **Markdown**：GFM、Shiki 代码高亮（标题 / 行号 / 高亮行 / diff / 聚焦 / 代码组）、KaTeX 公式、Mermaid 图表、提示框、折叠、标签页、脚注、图注与多图、B 站 / YouTube / 网易云嵌入、键盘按键、黑幕、徽章、注音等
+- **Markdown**：GFM、Shiki 代码高亮（标题 / 行号 / 高亮行 / diff / 聚焦 / 代码组）、KaTeX 公式、Mermaid 图表、数据图表（CSV 生成柱状 / 折线 / 饼图 / 雷达，也支持完整的 ECharts 配置）、思维导图、提示框、折叠、标签页、脚注、图注与多图、B 站 / YouTube / 网易云嵌入、键盘按键、黑幕、徽章、注音等
 - **后台**：仪表盘与访问统计、所见即所得的分栏编辑器（实时预览、粘贴 / 拖入图片上传、草稿自动保存、本地备份）、定时发布、评论审核与回复、说说、友链申请、媒体库、站点设置（Logo 与网站图标、主题色、导航、社交、SMTP 邮件通知、备案信息）、账号安全（两步验证、登录设备管理、新登录邮件提醒）
 - **存储**：图片上传后自动转 WebP 并生成缩略图与模糊占位；可存本地，也可存到任意 S3 兼容存储（Garage、MinIO、Cloudflare R2、阿里云 OSS、腾讯云 COS、AWS S3），支持一键迁移
 - **部署**：SQLite 单文件数据库，数据全部在 `data/` 目录，一个容器即可运行；提供 amd64 / arm64 预构建镜像
 
 ## 技术栈
 
-| 层     | 选型                                                 |
-| ------ | ---------------------------------------------------- |
-| 框架   | Next.js 16.3（App Router）、React 19.3、TypeScript 6 |
-| 样式   | Tailwind CSS 4、shadcn/ui（Base UI）                 |
-| 动效   | React `<ViewTransition>`、Motion 13、Lenis           |
-| 数据   | SQLite（better-sqlite3）+ Drizzle ORM                |
-| 认证   | Better Auth                                          |
-| 内容   | unified（remark / rehype）、Shiki 4、KaTeX、Mermaid  |
-| 编辑器 | CodeMirror 6                                         |
-| 图片   | sharp、ThumbHash                                     |
+| 层     | 选型                                                                  |
+| ------ | --------------------------------------------------------------------- |
+| 框架   | Next.js 16.3（App Router）、React 19.3、TypeScript 6                  |
+| 样式   | Tailwind CSS 4、shadcn/ui（Base UI）                                  |
+| 动效   | React `<ViewTransition>`、Motion 13、Lenis                            |
+| 数据   | SQLite（better-sqlite3）+ Drizzle ORM                                 |
+| 认证   | Better Auth                                                           |
+| 内容   | unified（remark / rehype）、Shiki 4、KaTeX、Mermaid、ECharts、markmap |
+| 编辑器 | CodeMirror 6                                                          |
+| 图片   | sharp、ThumbHash                                                      |
 
 ## 本地开发
 
@@ -211,20 +211,20 @@ garage bucket website --allow blog   # 可选：需要公开访问地址时
 
 完整示例见后台的《Markdown 语法指南》草稿。
 
-| 效果                     | 写法                                                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| 高亮                     | `==文字==`                                                                                                    |
-| 代码块标题、行号、高亮行 | ` ```ts title="a.ts" showLineNumbers {2,4-5} `                                                                |
-| diff / 高亮 / 聚焦某一行 | 行尾注释 `// [!code ++]`、`// [!code --]`、`// [!code highlight]`、`// [!code focus]`                         |
-| 代码组                   | `:::code-group` 内放多个代码块，语言后写 `[标签名]`                                                           |
-| 提示框                   | `> [!TIP]`，或 `:::tip[标题]` … `:::`（note / info / tip / success / important / warning / caution / danger） |
-| 折叠                     | `:::details[点击展开]` … `:::`                                                                                |
-| 标签页                   | `::::tabs` 内放多个 `:::tab[名称]`                                                                            |
-| 公式                     | `$E=mc^2$`、`$$ … $$`                                                                                         |
-| 图表                     | ` ```mermaid `                                                                                                |
-| 摘要分隔                 | `<!-- more -->` 之前的内容作为列表摘要                                                                        |
-| 嵌入                     | `::bilibili[BV号]`、`::youtube[视频ID]`、`::netease[歌曲ID]`、`::video{src="…"}`                              |
-| 行内扩展                 | `:kbd[Ctrl]`、`:spoiler[黑幕]`、`:badge[新]{type=tip}`、`:ruby[汉字]{rt="pīn yīn"}`、`H:sub[2]O`、`x:sup[2]`  |
+| 效果                     | 写法                                                                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 高亮                     | `==文字==`                                                                                                                          |
+| 代码块标题、行号、高亮行 | ` ```ts title="a.ts" showLineNumbers {2,4-5} `                                                                                      |
+| diff / 高亮 / 聚焦某一行 | 行尾注释 `// [!code ++]`、`// [!code --]`、`// [!code highlight]`、`// [!code focus]`                                               |
+| 代码组                   | `:::code-group` 内放多个代码块，语言后写 `[标签名]`                                                                                 |
+| 提示框                   | `> [!TIP]`，或 `:::tip[标题]` … `:::`（note / info / tip / success / important / warning / caution / danger）                       |
+| 折叠                     | `:::details[点击展开]` … `:::`                                                                                                      |
+| 标签页                   | `::::tabs` 内放多个 `:::tab[名称]`                                                                                                  |
+| 公式                     | `$E=mc^2$`、`$$ … $$`                                                                                                               |
+| 图表                     | ` ```mermaid `；数据图表 ` ```chart bar title="标题" unit=ms `（内容为 CSV，第一列是分类）；` ```echarts `；思维导图 ` ```markmap ` |
+| 摘要分隔                 | `<!-- more -->` 之前的内容作为列表摘要                                                                                              |
+| 嵌入                     | `::bilibili[BV号]`、`::youtube[视频ID]`、`::netease[歌曲ID]`、`::video{src="…"}`                                                    |
+| 行内扩展                 | `:kbd[Ctrl]`、`:spoiler[黑幕]`、`:badge[新]{type=tip}`、`:ruby[汉字]{rt="pīn yīn"}`、`H:sub[2]O`、`x:sup[2]`                        |
 
 图片的 `"标题"` 会显示为图注，连续的多张图片会自动排成网格，点击可放大。
 

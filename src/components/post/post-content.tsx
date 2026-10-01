@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react";
 import { useTheme } from "@/components/theme";
 import { cn } from "@/lib/utils";
 
+import { useDiagramViewer } from "./diagram-viewer";
+import { setupDiagrams } from "./diagrams";
 import { useImageZoom } from "./image-zoom";
 
 async function copyText(text: string): Promise<boolean> {
@@ -244,57 +246,23 @@ function setupMisc(root: HTMLElement) {
   }
 }
 
-async function renderMermaid(root: HTMLElement, dark: boolean) {
-  const blocks = root.querySelectorAll<HTMLElement>("[data-mermaid]");
-  if (!blocks.length) return;
-  const { default: mermaid } = await import("mermaid");
-  const css = getComputedStyle(document.documentElement);
-  const v = (name: string) => css.getPropertyValue(name).trim();
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: "strict",
-    theme: "base",
-    fontFamily: "inherit",
-    themeVariables: {
-      darkMode: dark,
-      background: v("--card"),
-      primaryColor: v("--card"),
-      primaryTextColor: v("--foreground"),
-      primaryBorderColor: v("--brand"),
-      secondaryColor: v("--muted"),
-      tertiaryColor: v("--background"),
-      lineColor: v("--muted-foreground"),
-      textColor: v("--foreground"),
-      mainBkg: v("--card"),
-      nodeBorder: v("--brand"),
-      clusterBkg: v("--muted"),
-      edgeLabelBackground: v("--background"),
-    },
-  });
-  let n = 0;
-  for (const block of blocks) {
-    const source =
-      block.dataset.source ?? block.querySelector(".mermaid-source")?.textContent ?? "";
-    block.dataset.source = source;
-    try {
-      const { svg } = await mermaid.render(`mermaid-${Date.now()}-${n++}`, source);
-      block.innerHTML = svg;
-    } catch {
-      block.innerHTML = "";
-      const pre = document.createElement("pre");
-      pre.className = "mermaid-source";
-      pre.textContent = source;
-      block.appendChild(pre);
-    }
-  }
-}
-
 /** 文章正文：服务端预渲染的 HTML + 浏览器端的交互增强 */
-export function PostContent({ html, className }: { html: string; className?: string }) {
+export function PostContent({
+  html,
+  className,
+  preview = false,
+}: {
+  html: string;
+  className?: string;
+  /** 后台编辑器的实时预览 */
+  preview?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
   const zoom = useImageZoom();
   const openZoom = zoom.open;
+  const viewer = useDiagramViewer();
+  const openViewer = viewer.open;
 
   useEffect(() => {
     const root = ref.current;
@@ -321,10 +289,11 @@ export function PostContent({ html, className }: { html: string; className?: str
     };
   }, [html, openZoom]);
 
+  // 图表的配色跟随明暗主题，切换后重新渲染
   useEffect(() => {
     if (!ref.current || !resolvedTheme) return;
-    void renderMermaid(ref.current, resolvedTheme === "dark");
-  }, [html, resolvedTheme]);
+    return setupDiagrams(ref.current, { preview, onZoom: openViewer });
+  }, [html, resolvedTheme, preview, openViewer]);
 
   return (
     <>
@@ -334,6 +303,7 @@ export function PostContent({ html, className }: { html: string; className?: str
         dangerouslySetInnerHTML={{ __html: html }}
       />
       {zoom.element}
+      {viewer.element}
     </>
   );
 }

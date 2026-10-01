@@ -1,8 +1,13 @@
+"use client";
+
 import * as React from "react";
 import { Input as InputPrimitive } from "@base-ui/react/input";
 import { cn } from "cn";
 
+import { ControlLabelContext } from "./control-label";
+
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  const label = React.useContext(ControlLabelContext);
   return (
     <InputPrimitive
       type={type}
@@ -12,6 +17,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         className,
       )}
       {...props}
+      aria-label={props["aria-label"] ?? (props["aria-labelledby"] ? undefined : label)}
     />
   );
 }

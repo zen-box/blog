@@ -263,7 +263,11 @@ export function rehypeTableWrap() {
   return (tree: Root) => {
     visit(tree, "element", (el, index, parent) => {
       if (!parent || index == null || el.tagName !== "table") return;
-      parent.children[index] = h("div.md-table", [el]);
+      parent.children[index] = h(
+        "div.md-table",
+        { tabIndex: 0, role: "region", ariaLabel: "表格数据，可横向滚动" },
+        [el],
+      );
       return SKIP;
     });
   };

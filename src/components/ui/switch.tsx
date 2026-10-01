@@ -1,7 +1,10 @@
 "use client";
 
+import { useContext } from "react";
 import { Switch as SwitchPrimitive } from "@base-ui/react/switch";
 import { cn } from "cn";
+
+import { ControlLabelContext } from "./control-label";
 
 function Switch({
   className,
@@ -10,6 +13,7 @@ function Switch({
 }: SwitchPrimitive.Root.Props & {
   size?: "sm" | "default";
 }) {
+  const label = useContext(ControlLabelContext);
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
@@ -19,6 +23,7 @@ function Switch({
         className,
       )}
       {...props}
+      aria-label={props["aria-label"] ?? (props["aria-labelledby"] ? undefined : label)}
     >
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"

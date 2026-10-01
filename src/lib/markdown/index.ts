@@ -26,6 +26,7 @@ import { db, schema } from "@/db";
 import type { TocItem } from "@/db/schema";
 import { resolveUploadUrl } from "@/server/storage";
 
+import { remarkDiagrams } from "./diagrams";
 import { CODE_THEMES, getHighlighter } from "./highlighter";
 import { preprocessMarkdown } from "./preprocess";
 import {
@@ -43,13 +44,12 @@ import {
   remarkBlogDirectives,
   remarkLinkCards,
   remarkMark,
-  remarkMermaid,
   remarkStats,
 } from "./remark-plugins";
 import { remarkTerminal } from "./terminal";
 
 /** 渲染管线版本：修改管线后递增，旧文章会在访问或后台操作时重新渲染 */
-export const RENDER_VERSION = 4;
+export const RENDER_VERSION = 5;
 
 export function thumbhashToDataUrl(b64: string): string | undefined {
   try {
@@ -100,7 +100,7 @@ async function createFullProcessor() {
     .use(remarkBlogDirectives)
     .use(remarkLinkCards)
     .use(remarkMark)
-    .use(remarkMermaid)
+    .use(remarkDiagrams)
     .use(remarkRehype, {
       allowDangerousHtml: true,
       footnoteLabel: "脚注",

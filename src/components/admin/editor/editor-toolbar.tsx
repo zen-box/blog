@@ -3,6 +3,7 @@
 import type { EditorView } from "@codemirror/view";
 import {
   BoldIcon,
+  ChartColumnIcon,
   CodeIcon,
   FileCodeIcon,
   Heading2Icon,
@@ -28,7 +29,10 @@ import { useRef } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -83,6 +87,122 @@ const CALLOUTS = [
   { type: "danger", label: "危险" },
   { type: "success", label: "完成" },
   { type: "details", label: "折叠内容" },
+];
+
+const fence = (info: string, lines: string[]) => ["```" + info, ...lines, "```"].join("\n");
+
+/** 「插入图表」的模板；select 是插入后选中的文字，方便直接改 */
+const DIAGRAMS: { group: string; items: { label: string; block: string; select?: string }[] }[] = [
+  {
+    group: "Mermaid",
+    items: [
+      {
+        label: "流程图",
+        block: fence("mermaid", [
+          "flowchart LR",
+          "  A[开始] --> B{判断}",
+          "  B -- 是 --> C[执行]",
+          "  B -- 否 --> D[结束]",
+        ]),
+        select: "开始",
+      },
+      {
+        label: "时序图",
+        block: fence("mermaid", [
+          "sequenceDiagram",
+          "  participant 浏览器",
+          "  participant 服务器",
+          "  浏览器->>服务器: 发送请求",
+          "  服务器-->>浏览器: 返回结果",
+        ]),
+        select: "发送请求",
+      },
+      {
+        label: "甘特图",
+        block: fence("mermaid", [
+          "gantt",
+          "  title 项目计划",
+          "  dateFormat YYYY-MM-DD",
+          "  section 准备",
+          "  调研 :a1, 2026-10-01, 5d",
+          "  section 实施",
+          "  开发 :after a1, 10d",
+        ]),
+        select: "项目计划",
+      },
+      {
+        label: "时间线",
+        block: fence("mermaid", ["timeline", "  title 时间线", "  2024 : 建站", "  2025 : 改版"]),
+        select: "时间线",
+      },
+    ],
+  },
+  {
+    group: "数据图表",
+    items: [
+      {
+        label: "柱状图",
+        block: fence('chart bar title="标题"', ["机器,单核,多核", "A,1200,2400", "B,1100,2100"]),
+        select: "标题",
+      },
+      {
+        label: "横向条形图",
+        block: fence('chart bar horizontal title="标题" unit=MB/s', [
+          "机器,读取",
+          "A,45",
+          "B,38",
+          "C,52",
+        ]),
+        select: "标题",
+      },
+      {
+        label: "折线图",
+        block: fence('chart line title="标题" unit=ms', [
+          "时间,电信,联通",
+          "00:00,142,155",
+          "12:00,165,170",
+          "20:00,190,185",
+        ]),
+        select: "标题",
+      },
+      {
+        label: "饼图",
+        block: fence('chart pie title="标题"', ["类别,数量", "A,40", "B,35", "C,25"]),
+        select: "标题",
+      },
+      {
+        label: "雷达图",
+        block: fence('chart radar title="标题"', [
+          "指标,A,B",
+          "CPU,80,70",
+          "内存,65,75",
+          "磁盘,70,60",
+          "网络,90,80",
+        ]),
+        select: "标题",
+      },
+      {
+        label: "ECharts 完整配置",
+        block: fence("echarts", [
+          "{",
+          "  xAxis: { type: 'category', data: ['A', 'B', 'C'] },",
+          "  yAxis: {},",
+          "  series: [{ type: 'bar', data: [10, 20, 15] }],",
+          "}",
+        ]),
+      },
+    ],
+  },
+  {
+    group: "思维导图",
+    items: [
+      {
+        label: "思维导图",
+        block: fence("markmap", ["# 中心主题", "## 分支一", "- 要点", "## 分支二", "- 要点"]),
+        select: "中心主题",
+      },
+    ],
+  },
 ];
 
 export function EditorToolbar({
@@ -207,6 +327,42 @@ export function EditorToolbar({
             >
               {c.label}
             </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <DropdownMenuTrigger
+                aria-label="插入图表"
+                onMouseDown={(e) => e.preventDefault()}
+                className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-popup-open:bg-muted [&_svg]:size-4"
+              />
+            }
+          >
+            <ChartColumnIcon />
+          </TooltipTrigger>
+          <TooltipContent>插入图表</TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="start" className="w-44">
+          {DIAGRAMS.map((section, i) => (
+            <DropdownMenuGroup key={section.group}>
+              {i > 0 && <DropdownMenuSeparator />}
+              <DropdownMenuLabel>{section.group}</DropdownMenuLabel>
+              {section.items.map((item) => (
+                <DropdownMenuItem
+                  key={item.label}
+                  onClick={run((v) => {
+                    const start = item.select ? item.block.indexOf(item.select) : -1;
+                    if (start >= 0) insertBlock(v, item.block, start, start + item.select!.length);
+                    else insertBlock(v, item.block);
+                  })}
+                >
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
           ))}
         </DropdownMenuContent>
       </DropdownMenu>

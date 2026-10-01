@@ -8,12 +8,20 @@
     color: var(--fg-body);
     overflow-wrap: break-word;
     hanging-punctuation: allow-end;
+    line-break: strict;
+    text-autospace: normal;
+    text-spacing-trim: trim-start;
   }
   @media (width < 40rem) {
     .prose-blog {
       --prose-size: 1rem;
       line-height: 1.8;
     }
+  }
+
+  .prose-blog :is(pre, code) {
+    text-autospace: no-autospace;
+    text-spacing-trim: space-all;
   }
 
   .prose-blog > :first-child {
@@ -1313,26 +1321,260 @@
     font-size: 1.06em;
   }
 
-  .prose-blog .md-mermaid {
+  /* ---------------------------------------------------------------- */
+  /* 图表：Mermaid、数据图表、思维导图                                       */
+  /* ---------------------------------------------------------------- */
+
+  .prose-blog :is(.md-mermaid, .md-chart, .md-markmap) {
+    position: relative;
     margin: 1.8em 0;
-    padding: 1.2em;
     border: 1px solid var(--border);
     border-radius: 0.85rem;
     background: var(--card);
+  }
+  /* 图表库按默认字距测量文字宽度，正文的字距会让文字比预留的位置宽而提前换行 */
+  .prose-blog :is(.md-mermaid, .md-chart-plot, .md-markmap-plot) {
+    letter-spacing: normal;
+  }
+
+  /* 渲染完成之前：留出位置，显示一层很淡的流光 */
+  .prose-blog .md-mermaid:not([data-rendered], [data-error]),
+  .prose-blog .md-chart:not([data-rendered], [data-error]) > .md-chart-plot,
+  .prose-blog .md-markmap:not([data-rendered], [data-error]) > .md-markmap-plot {
+    background: linear-gradient(
+        100deg,
+        transparent 35%,
+        color-mix(in oklab, var(--foreground) 3.5%, transparent) 50%,
+        transparent 65%
+      )
+      0 0 / 220% 100%;
+    animation: diagram-pending 1.8s ease-in-out infinite;
+  }
+
+  .prose-blog .md-mermaid {
+    padding: 1.2em;
     overflow-x: auto;
     text-align: center;
   }
-  .prose-blog .md-mermaid .mermaid-source {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    text-align: left;
-    color: var(--muted-foreground);
-    white-space: pre;
+  .prose-blog .md-mermaid:not([data-rendered], [data-error]) {
+    min-height: 12rem;
   }
-  .prose-blog .md-mermaid svg {
+  .prose-blog .md-mermaid:not([data-rendered], [data-error]) > .mermaid-source {
+    display: none;
+  }
+  .prose-blog .md-mermaid > svg {
     max-width: 100%;
     height: auto;
     margin-inline: auto;
+    cursor: zoom-in;
+  }
+  .prose-blog .md-mermaid[data-error] {
+    padding: 0;
+    border: 0;
+    background: none;
+    text-align: left;
+  }
+  .prose-blog .md-mermaid[data-error] > .md-diagram-error {
+    margin: 0;
+  }
+
+  /* 数据图表 */
+  .prose-blog .md-chart {
+    padding: 0.7rem 1rem 0.85rem;
+  }
+  .prose-blog .md-chart:not(:has(> .md-chart-title)) {
+    padding-top: 2.75rem;
+  }
+  .prose-blog .md-chart-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.75em;
+    min-height: 1.9rem;
+    margin: 0 8rem 0.55rem 0;
+    padding-top: 0.3rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--foreground);
+  }
+  .prose-blog .md-chart-unit {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--muted-foreground);
+  }
+  .prose-blog .md-chart-plot {
+    height: var(--chart-h, 300px);
+    border-radius: 0.5rem;
+  }
+  .prose-blog .md-chart[data-view="table"] > .md-chart-plot {
+    display: none;
+  }
+  .prose-blog .md-chart-data .md-table {
+    margin: 0;
+  }
+  .prose-blog .md-chart-data tbody th {
+    background: none;
+    font-weight: 500;
+  }
+  /* 图表视图下，数据表格只留给读屏软件 */
+  .prose-blog .md-chart:not([data-view="table"]) > .md-chart-data,
+  .prose-blog .md-markmap-outline {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* 思维导图 */
+  .prose-blog .md-markmap {
+    padding: 0.5rem;
+  }
+  .prose-blog .md-markmap-plot {
+    height: var(--chart-h, 360px);
+  }
+  .prose-blog .md-markmap-plot > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* 右上角的小按钮：放大查看、切换表格 */
+  .prose-blog :is(.md-diagram-zoom, .md-chart-toggle) {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+    height: 1.9rem;
+    padding: 0 0.6rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+    background: color-mix(in oklab, var(--card) 88%, transparent);
+    transition:
+      opacity 0.2s ease,
+      color 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .prose-blog :is(.md-diagram-zoom, .md-chart-toggle):hover {
+    color: var(--foreground);
+    background: color-mix(in oklab, var(--foreground) 7%, var(--card));
+  }
+  .prose-blog :is(.md-diagram-zoom, .md-chart-toggle) svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+  .prose-blog .md-chart-toggle {
+    right: 3rem;
+  }
+  .prose-blog .md-chart[data-view="table"] > .md-diagram-zoom {
+    display: none;
+  }
+  .prose-blog .md-diagram-zoom {
+    width: 1.9rem;
+    padding: 0;
+    opacity: 0;
+  }
+  .prose-blog :is(.md-mermaid, .md-markmap, .md-chart):is(:hover, :focus-within) > .md-diagram-zoom,
+  .prose-blog .md-diagram-zoom:focus-visible {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    .prose-blog .md-diagram-zoom {
+      opacity: 1;
+    }
+  }
+
+  /* 图表提示框：数值在前，名称在后，用短线标出系列颜色 */
+  .viz-tip {
+    min-width: 6.5rem;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  .viz-tip-head {
+    margin-bottom: 3px;
+    color: var(--muted-foreground);
+  }
+  .viz-tip-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .viz-tip-key {
+    flex: none;
+    width: 12px;
+    height: 2px;
+    border-radius: 1px;
+  }
+  .viz-tip-row strong {
+    color: var(--foreground);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .viz-tip-name {
+    color: var(--muted-foreground);
+  }
+
+  /* 写错时的提示 */
+  .prose-blog .md-diagram-error {
+    margin: 1.8em 0;
+    padding: 0.85rem 1rem 1rem;
+    border: 1px solid color-mix(in oklab, var(--destructive) 35%, var(--border));
+    border-radius: 0.85rem;
+    background: color-mix(in oklab, var(--destructive) 5%, var(--card));
+  }
+  .prose-blog .md-diagram-error-title {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--destructive);
+  }
+  .prose-blog .md-diagram-error pre {
+    max-height: 20rem;
+    margin: 0.6rem 0 0;
+    padding: 0.7rem 0.85rem;
+    overflow: auto;
+    border-radius: 0.55rem;
+    background: var(--code-bg);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--muted-foreground);
+  }
+  .prose-blog .md-diagram-error pre.md-diagram-error-detail {
+    color: var(--foreground);
+  }
+  .prose-blog .md-diagram-error pre.md-diagram-error-source {
+    padding: 0.7rem 0;
+    white-space: pre;
+    word-break: normal;
+  }
+  .prose-blog .md-diagram-source-line {
+    display: block;
+    min-width: max-content;
+    padding-inline: 0.85rem;
+  }
+  .prose-blog .md-diagram-source-line[data-error-line] {
+    background: color-mix(in oklab, var(--destructive) 12%, transparent);
+    color: var(--foreground);
+    box-shadow: inset 2px 0 var(--destructive);
+  }
+  .prose-blog .md-diagram-line-number {
+    display: inline-block;
+    width: 3ch;
+    margin-right: 1.25ch;
+    text-align: right;
+    color: var(--subtle);
+    user-select: none;
   }
 
   .prose-blog .footnotes {
@@ -1395,4 +1637,34 @@
   100% {
     background-color: transparent;
   }
+}
+
+@keyframes diagram-pending {
+  from {
+    background-position: 110% 0;
+  }
+  to {
+    background-position: -110% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prose-blog :is(.md-mermaid, .md-chart-plot, .md-markmap-plot) {
+    animation: none !important;
+  }
+}
+
+/*
+ * 思维导图的配色变量。markmap 把自己的默认值写在 SVG 内的 <style> 里（不在任何 layer 中），
+ * 所以这里也不能放进 @layer，靠更高的优先级覆盖
+ */
+.prose-blog .md-markmap svg.markmap,
+.diagram-viewer svg.markmap {
+  --markmap-text-color: var(--foreground);
+  --markmap-font: 400 14px/20px var(--font-sans);
+  --markmap-circle-open-bg: var(--card);
+  --markmap-a-color: var(--brand);
+  --markmap-a-hover-color: var(--brand);
+  --markmap-code-bg: var(--muted);
+  --markmap-code-color: var(--foreground);
+  --markmap-highlight-bg: color-mix(in oklab, var(--ochre) 30%, transparent);
 }

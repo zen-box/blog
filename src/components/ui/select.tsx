@@ -5,6 +5,8 @@ import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cn } from "cn";
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react";
 
+import { ControlLabelContext } from "./control-label";
+
 const Select = SelectPrimitive.Root;
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
@@ -35,6 +37,7 @@ function SelectTrigger({
 }: SelectPrimitive.Trigger.Props & {
   size?: "sm" | "default";
 }) {
+  const label = React.useContext(ControlLabelContext);
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -44,6 +47,7 @@ function SelectTrigger({
         className,
       )}
       {...props}
+      aria-label={props["aria-label"] ?? (props["aria-labelledby"] ? undefined : label)}
     >
       {children}
       <SelectPrimitive.Icon

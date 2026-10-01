@@ -23,21 +23,21 @@ export function SiteInfo({ rows }: { rows: { label: string; value: string }[] })
       {rows.map((r) => (
         <div key={r.label} className="flex items-center gap-4 px-4 py-2.5">
           <dt className="w-12 shrink-0 text-muted-foreground">{r.label}</dt>
-          <dd className="min-w-0 flex-1 truncate font-mono text-[0.8rem] text-foreground">
-            {r.value}
+          <dd className="flex min-w-0 flex-1 items-center gap-4 font-mono text-[0.8rem] text-foreground">
+            <span className="min-w-0 flex-1 truncate">{r.value}</span>
+            <button
+              type="button"
+              onClick={() => copy(r.value)}
+              aria-label={`复制${r.label}`}
+              className="grid size-7 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+            >
+              {copied === r.value ? (
+                <CheckIcon className="size-3.5 text-brand" />
+              ) : (
+                <CopyIcon className="size-3.5" />
+              )}
+            </button>
           </dd>
-          <button
-            type="button"
-            onClick={() => copy(r.value)}
-            aria-label={`复制${r.label}`}
-            className="grid size-7 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
-          >
-            {copied === r.value ? (
-              <CheckIcon className="size-3.5 text-brand" />
-            ) : (
-              <CopyIcon className="size-3.5" />
-            )}
-          </button>
         </div>
       ))}
     </dl>

@@ -1,7 +1,12 @@
+"use client";
+
 import * as React from "react";
 import { cn } from "cn";
 
+import { ControlLabelContext } from "./control-label";
+
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+  const label = React.useContext(ControlLabelContext);
   return (
     <textarea
       data-slot="textarea"
@@ -10,6 +15,7 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
         className,
       )}
       {...props}
+      aria-label={props["aria-label"] ?? (props["aria-labelledby"] ? undefined : label)}
     />
   );
 }

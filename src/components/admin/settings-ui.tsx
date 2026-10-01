@@ -1,3 +1,6 @@
+"use client";
+
+import { ControlLabelContext } from "@/components/ui/control-label";
 import { cn } from "@/lib/utils";
 
 export function Section({
@@ -39,7 +42,9 @@ export function Row({
         <p className="text-sm text-foreground">{label}</p>
         {hint && <p className="mt-0.5 text-xs text-subtle">{hint}</p>}
       </div>
-      <div className="min-w-0">{children}</div>
+      <div className="min-w-0">
+        <ControlLabelContext value={label}>{children}</ControlLabelContext>
+      </div>
     </div>
   );
 }

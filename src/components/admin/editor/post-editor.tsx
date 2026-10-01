@@ -30,6 +30,8 @@ import type { EditorPost } from "@/server/admin";
 import { markdownFor, uploadFiles } from "../upload";
 import { insertText, replacePlaceholder } from "./commands";
 import { EditorToolbar } from "./editor-toolbar";
+import { cleanImported } from "./import-cleanup";
+import { ImportNotice } from "./import-notice";
 import { MarkdownEditor } from "./markdown-editor";
 import { PostSettings } from "./post-settings";
 
@@ -314,7 +316,7 @@ export function PostEditor({
             post.status === "published"
               ? scheduled
                 ? "bg-amber-500/12 text-amber-700 dark:text-amber-400"
-                : "bg-emerald-600/10 text-emerald-700 dark:text-emerald-400"
+                : "bg-emerald-600/10 text-emerald-800 dark:text-emerald-400"
               : "bg-muted text-muted-foreground",
           )}
         >
@@ -368,6 +370,7 @@ export function PostEditor({
           </button>
           <button
             type="button"
+            aria-label="文章设置"
             onClick={() => setSettingsOpen(true)}
             className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-sm transition-colors hover:bg-muted"
           >
@@ -473,6 +476,21 @@ export function PostEditor({
                   onPickImages={(files) => void onUpload(files)}
                 />
               </div>
+              <ImportNotice
+                content={post.content}
+                onClean={() => {
+                  const v = viewRef.current;
+                  if (!v) return;
+                  const current = v.state.doc.toString();
+                  const next = cleanImported(current);
+                  if (next === current) return;
+                  v.dispatch({
+                    changes: { from: 0, to: v.state.doc.length, insert: next },
+                    userEvent: "input.cleanup",
+                  });
+                  toast.success("已整理导入的内容", { description: "不满意可以按 Ctrl+Z 撤销" });
+                }}
+              />
               <MarkdownEditor
                 value={post.content}
                 onChange={(content) => update({ content })}
@@ -496,7 +514,7 @@ export function PostEditor({
                 {post.title || <span className="text-subtle">无标题</span>}
               </h1>
               {preview ? (
-                <PostContent html={preview.html} />
+                <PostContent html={preview.html} preview />
               ) : (
                 <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
               )}

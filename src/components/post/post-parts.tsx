@@ -146,7 +146,7 @@ export function PostFooter({
             href={settings.licenseUrl}
             target="_blank"
             rel="noopener noreferrer license"
-            className="text-brand"
+            className="text-brand underline decoration-brand/40 underline-offset-4"
           >
             {settings.license}
           </a>{" "}

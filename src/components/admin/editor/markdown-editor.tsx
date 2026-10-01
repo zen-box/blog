@@ -82,7 +82,7 @@ const highlight = HighlightStyle.define([
     tag: t.monospace,
     fontFamily: "var(--font-mono)",
     fontSize: "0.88em",
-    color: "color-mix(in oklab, var(--ochre) 75%, var(--foreground))",
+    color: "color-mix(in oklab, var(--ochre) 55%, var(--foreground))",
   },
   { tag: t.quote, color: "var(--muted-foreground)" },
   { tag: [t.processingInstruction, t.meta], color: "var(--subtle)" },
@@ -91,7 +91,7 @@ const highlight = HighlightStyle.define([
   { tag: [t.keyword, t.modifier, t.operatorKeyword], color: "var(--brand)" },
   {
     tag: [t.string, t.special(t.string), t.regexp],
-    color: "color-mix(in oklab, var(--ochre) 80%, var(--foreground))",
+    color: "color-mix(in oklab, var(--ochre) 55%, var(--foreground))",
   },
   { tag: [t.comment, t.lineComment, t.blockComment], color: "var(--subtle)", fontStyle: "italic" },
   { tag: [t.number, t.bool, t.null, t.atom], color: "#b8432f" },
@@ -137,6 +137,7 @@ export function MarkdownEditor({
       state: EditorState.create({
         doc: value,
         extensions: [
+          EditorView.contentAttributes.of({ "aria-label": "文章正文（Markdown）" }),
           history(),
           drawSelection(),
           dropCursor(),

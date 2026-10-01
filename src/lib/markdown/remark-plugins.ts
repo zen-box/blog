@@ -1,15 +1,6 @@
 import type { Element, ElementContent, Properties } from "hast";
 import { h } from "hastscript";
-import type {
-  Blockquote,
-  Code,
-  Data,
-  Parent,
-  PhrasingContent,
-  Root,
-  RootContent,
-  Text,
-} from "mdast";
+import type { Blockquote, Data, Parent, PhrasingContent, Root, RootContent, Text } from "mdast";
 import type { ContainerDirective, LeafDirective, TextDirective } from "mdast-util-directive";
 import { toString } from "mdast-util-to-string";
 import { SKIP, visit } from "unist-util-visit";
@@ -537,26 +528,6 @@ export function remarkMark() {
       if (last < t.value.length) parts.push({ type: "text", value: t.value.slice(last) });
       parent.children.splice(index, 1, ...(parts as never[]));
       return [SKIP, index + parts.length];
-    });
-  };
-}
-
-/* ------------------------------------------------------------------ */
-/* Mermaid：交给浏览器端按需渲染                                             */
-/* ------------------------------------------------------------------ */
-
-const escapeHtml = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-export function remarkMermaid() {
-  return (tree: Root) => {
-    visit(tree, "code", (c: Code, index, parent) => {
-      if (!parent || index == null || c.lang?.toLowerCase() !== "mermaid") return;
-      parent.children[index] = {
-        type: "html",
-        value: `<div class="md-mermaid" data-mermaid><pre class="mermaid-source">${escapeHtml(c.value)}</pre></div>`,
-      } as never;
-      return SKIP;
     });
   };
 }
