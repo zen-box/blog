@@ -11,6 +11,7 @@ import {
   PenLineIcon,
   SendIcon,
   Settings2Icon,
+  SparklesIcon,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
@@ -34,8 +35,10 @@ import { cleanImported } from "./import-cleanup";
 import { ImportNotice } from "./import-notice";
 import { MarkdownEditor } from "./markdown-editor";
 import { PostSettings } from "./post-settings";
-import { AiAssistant } from "./ai-assistant";
-import { ReaderAiPanel } from "./reader-ai-panel";
+import { AiMenuButton, AiRewriteBar, AiSelectionBubble, useAiAssistant } from "./ai-assistant";
+import { useAiMetadata } from "./ai-metadata";
+import { AiReview, AiReviewDock } from "./ai-review";
+import { ReaderAiSheet } from "./reader-ai-panel";
 import { PostHistory } from "./post-history";
 
 type Mode = "write" | "split" | "preview";
@@ -74,6 +77,8 @@ export function PostEditor({
   const [chosenMode, setMode] = useState<Mode | null>(null);
   const mode: Mode = chosenMode ?? (wide ? "split" : "write");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [readerOpen, setReaderOpen] = useState(false);
+  const [reviewSheetOpen, setReviewSheetOpen] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewTick, setPreviewTick] = useState(0);
   const [aiPreview, setAiPreview] = useState<string | null>(null);
@@ -289,6 +294,32 @@ export function PostEditor({
     if (!response.ok) throw new Error(data.error || "历史快照保存失败");
   }
 
+  const ai = useAiAssistant({
+    post,
+    viewRef,
+    onPreview: showAiPreview,
+    snapshot: saveSnapshot,
+    // 整篇修改在右栏审阅；窄屏用底部抽屉
+    onDocStart: () => (wide ? setMode("split") : setReviewSheetOpen(true)),
+  });
+  const meta = useAiMetadata({ post, viewRef, categories, update });
+  const reviewing = !!ai.job && ai.job.task !== "rewrite";
+  const reviewInPane = reviewing && wide && mode === "split";
+  const aiMenu = {
+    isPost,
+    onMetadata: () => {
+      setSettingsOpen(true);
+      if (meta.state.status !== "busy") void meta.run();
+    },
+    onReaderAi: () => {
+      if (!post.id || dirty) {
+        toast("先保存正文，再管理读者 AI 内容");
+        return;
+      }
+      setReaderOpen(true);
+    },
+  };
+
   // 草稿停顿几秒后自动保存到服务器；已发布的内容只做本地备份，避免把半成品发布出去
   useEffect(() => {
     if (!dirty || post.status !== "draft" || !post.title.trim() || saving) return;
@@ -344,6 +375,19 @@ export function PostEditor({
       : savedAt
         ? `已保存 · ${formatRelative(savedAt)}`
         : "尚未保存";
+
+  const previewBody = (
+    <>
+      <h1 className="mb-8 font-serif text-[2rem] leading-snug font-bold text-foreground">
+        {post.title || <span className="text-subtle">无标题</span>}
+      </h1>
+      {preview ? (
+        <PostContent html={preview.html} preview />
+      ) : (
+        <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
+      )}
+    </>
+  );
 
   const modes: { key: Mode; label: string; icon: React.ReactNode }[] = [
     { key: "write", label: "写作", icon: <PenLineIcon className="size-3.5" /> },
@@ -529,11 +573,16 @@ export function PostEditor({
                 placeholder={isPost ? "文章标题" : "页面标题"}
                 className="field-sizing-content w-full resize-none bg-transparent font-serif text-[1.9rem] leading-snug font-bold text-foreground outline-none placeholder:text-subtle"
               />
-              <div className="sticky top-0 z-10 -mx-2 my-3 bg-background/90 px-1 py-1 backdrop-blur">
+              <div
+                data-editor-toolbar
+                className="sticky top-0 z-10 -mx-2 my-3 flex items-start gap-1 bg-background/90 px-1 py-1 backdrop-blur"
+              >
                 <EditorToolbar
+                  className="min-w-0 flex-1"
                   getView={() => viewRef.current}
                   onPickImages={(files) => void onUpload(files)}
                 />
+                <AiMenuButton ai={ai} viewRef={viewRef} selection={selection} {...aiMenu} />
               </div>
               <ImportNotice
                 content={post.content}
@@ -550,16 +599,6 @@ export function PostEditor({
                   toast.success("已整理导入的内容", { description: "不满意可以按 Ctrl+Z 撤销" });
                 }}
               />
-              <AiAssistant
-                post={post}
-                viewRef={viewRef}
-                selection={selection}
-                categories={categories}
-                update={update}
-                onPreview={showAiPreview}
-                snapshot={saveSnapshot}
-              />
-              {isPost && <ReaderAiPanel postId={post.id} dirty={dirty} />}
               <MarkdownEditor
                 value={post.content}
                 onChange={(content) => update({ content })}
@@ -576,24 +615,28 @@ export function PostEditor({
         {mode !== "write" && (
           <div
             ref={previewScroll}
-            className="min-h-0 overflow-y-auto bg-card/40"
+            className={cn(
+              "min-h-0 bg-card/40",
+              reviewInPane ? "overflow-hidden" : "overflow-y-auto",
+            )}
             data-lenis-prevent
           >
-            <div className="mx-auto max-w-[42rem] px-6 pt-10 pb-[40vh]">
-              {aiPreview !== null && (
-                <p className="mb-4 text-sm text-brand" role="status">
-                  AI 建议预览 · 正文尚未应用
-                </p>
-              )}
-              <h1 className="mb-8 font-serif text-[2rem] leading-snug font-bold text-foreground">
-                {post.title || <span className="text-subtle">无标题</span>}
-              </h1>
-              {preview ? (
-                <PostContent html={preview.html} preview />
-              ) : (
-                <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
-              )}
-            </div>
+            {reviewInPane ? (
+              <AiReview ai={ai} preview={previewBody} />
+            ) : (
+              <div className="mx-auto max-w-[42rem] px-6 pt-10 pb-[40vh]">
+                {aiPreview !== null && (
+                  <p
+                    role="status"
+                    className="mb-6 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-xs text-brand"
+                  >
+                    <SparklesIcon className="size-3.5" />
+                    正在预览 AI 建议，正文还没有改动
+                  </p>
+                )}
+                {previewBody}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -602,7 +645,9 @@ export function PostEditor({
       <div className="flex items-center gap-4 border-t border-border/70 px-4 py-1.5 text-xs text-subtle">
         <span>{(preview?.wordCount ?? 0).toLocaleString("zh-CN")} 字</span>
         <span>约 {preview?.readingTime ?? 1} 分钟读完</span>
-        <span className="ml-auto hidden sm:inline">粘贴或拖入图片即可上传 · Ctrl/⌘ + S 保存</span>
+        <span className="ml-auto hidden sm:inline">
+          粘贴或拖入图片即可上传 · Ctrl/⌘ + S 保存 · Ctrl/⌘ + J 唤起 AI
+        </span>
       </div>
 
       <PostSettings
@@ -612,7 +657,26 @@ export function PostEditor({
         update={update}
         categories={categories}
         allTags={allTags}
-        onGenerateInfo={() => window.dispatchEvent(new Event("blog-ai-metadata"))}
+        meta={meta}
+      />
+      {isPost && (
+        <ReaderAiSheet
+          postId={post.id}
+          dirty={dirty}
+          open={readerOpen}
+          onOpenChange={setReaderOpen}
+        />
+      )}
+      <AiSelectionBubble ai={ai} viewRef={viewRef} selection={selection} {...aiMenu} />
+      <AiRewriteBar ai={ai} viewRef={viewRef} />
+      <AiReviewDock
+        ai={ai}
+        inPane={reviewInPane}
+        compact={!wide}
+        sheetOpen={reviewSheetOpen}
+        onSheetOpenChange={setReviewSheetOpen}
+        onShow={() => (wide ? setMode("split") : setReviewSheetOpen(true))}
+        preview={previewBody}
       />
     </div>
   );

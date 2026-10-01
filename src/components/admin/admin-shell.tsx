@@ -15,6 +15,7 @@ import {
   PanelsTopLeftIcon,
   PenLineIcon,
   SettingsIcon,
+  SparklesIcon,
   TagsIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -90,6 +91,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
     items: [
       { title: "媒体库", href: "/admin/media", icon: ImageIcon },
       { title: "音乐", href: "/admin/music", icon: Music2Icon },
+      { title: "AI 助手", href: "/admin/ai", icon: SparklesIcon },
       { title: "后台任务", href: "/admin/jobs", icon: ListTodoIcon },
       { title: "设置", href: "/admin/settings", icon: SettingsIcon },
     ],
@@ -109,6 +111,7 @@ const TITLES: [RegExp, string][] = [
   [/^\/admin\/links/, "友链"],
   [/^\/admin\/media/, "媒体库"],
   [/^\/admin\/music/, "音乐"],
+  [/^\/admin\/ai/, "AI 助手"],
   [/^\/admin\/jobs/, "后台任务"],
   [/^\/admin\/settings/, "设置"],
   [/^\/admin$/, "仪表盘"],

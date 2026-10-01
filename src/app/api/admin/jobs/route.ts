@@ -1,4 +1,7 @@
+import { inArray } from "drizzle-orm";
 import { z } from "zod";
+
+import { db, schema } from "@/db";
 import { adminJson, aiHttpError, guardAiAdmin, readAdminJson } from "@/server/ai-http";
 import { cancelJob, jobCounts, listJobs, publicJob } from "@/server/background-jobs";
 import { retryReaderJob } from "@/server/reader-ai";
@@ -16,7 +19,20 @@ export async function GET(request: Request) {
     const limit = params.has("limit")
       ? z.coerce.number().int().min(1).max(100).parse(params.get("limit"))
       : 50;
-    return adminJson({ jobs: listJobs(postId, limit).map(publicJob), counts: jobCounts() });
+    const jobs = listJobs(postId, limit).map(publicJob);
+    // 任务列表显示文章标题，而不是编号
+    const ids = [...new Set(jobs.map((job) => job.postId))];
+    const titles = ids.length
+      ? Object.fromEntries(
+          db
+            .select({ id: schema.posts.id, title: schema.posts.title })
+            .from(schema.posts)
+            .where(inArray(schema.posts.id, ids))
+            .all()
+            .map((post) => [post.id, post.title]),
+        )
+      : {};
+    return adminJson({ jobs, counts: jobCounts(), titles });
   } catch (error) {
     return aiHttpError(error);
   }

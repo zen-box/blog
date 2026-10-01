@@ -7,7 +7,6 @@ import {
   LoaderIcon,
   PlusIcon,
   RefreshCwIcon,
-  SaveIcon,
   SendIcon,
   XIcon,
 } from "lucide-react";
@@ -32,11 +31,9 @@ import { cn } from "@/lib/utils";
 import { ImageField } from "./image-field";
 import { LinkCardSettings } from "./link-card-settings";
 import { type AccountInfo, SecuritySettings } from "./security-settings";
+import { SaveBar } from "./save-bar";
 import { Row, Section } from "./settings-ui";
 import { StorageSettings } from "./storage-settings";
-import { AiSettings } from "./ai-settings";
-import { MusicSettings } from "./music-settings";
-import { ReaderAiSettings } from "./reader-ai-settings";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -53,9 +50,6 @@ const SECTIONS = [
   { id: "footer", label: "页脚与备案" },
   { id: "storage", label: "存储" },
   { id: "linkcards", label: "链接卡片" },
-  { id: "ai", label: "AI 写作助手" },
-  { id: "music", label: "轻音乐播放器" },
-  { id: "reader-ai", label: "读者 AI 内容" },
   { id: "advanced", label: "高级" },
   { id: "account", label: "账号与安全" },
   { id: "devices", label: "登录设备" },
@@ -171,9 +165,6 @@ export function SettingsForm({
       </nav>
 
       <div className="space-y-5 pb-24">
-        <AiSettings />
-        <ReaderAiSettings />
-        <MusicSettings />
         <Section id="site" title="站点">
           <Row label="站点名称">
             <Input value={s.siteTitle} onChange={(e) => set("siteTitle", e.target.value)} />
@@ -685,39 +676,7 @@ export function SettingsForm({
         />
       </div>
 
-      <AnimatePresence>
-        {dirty && (
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 24 }}
-            transition={{ duration: 0.45, ease: EASE }}
-            className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-border bg-popover/95 py-2 pr-2 pl-4 text-sm shadow-float backdrop-blur md:left-[calc(50%+var(--sidebar-width,0px)/2)]"
-          >
-            <span className="text-muted-foreground">有未保存的修改</span>
-            <button
-              type="button"
-              onClick={() => setS(saved)}
-              className="h-8 rounded-lg px-3 text-muted-foreground hover:text-foreground"
-            >
-              撤销
-            </button>
-            <button
-              type="button"
-              onClick={save}
-              disabled={pending}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-foreground px-3.5 text-background hover:opacity-90 disabled:opacity-50"
-            >
-              {pending ? (
-                <LoaderIcon className="size-3.5 animate-spin" />
-              ) : (
-                <SaveIcon className="size-3.5" />
-              )}
-              保存设置
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <SaveBar dirty={dirty} saving={pending} onSave={save} onReset={() => setS(saved)} />
     </div>
   );
 }

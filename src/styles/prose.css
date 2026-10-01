@@ -1669,17 +1669,74 @@
   --markmap-highlight-bg: color-mix(in oklab, var(--ochre) 30%, transparent);
 }
 
-/* 编辑器 AI 建议沿用品牌色；改写结果只是装饰层，接受前不修改正文。 */
-.ai-original-removed {
-  text-decoration: line-through;
-  background: color-mix(in oklab, var(--destructive) 10%, transparent);
+/* 文字差异（版本历史、AI 建议共用）：绿色是新增，红色删除线是删掉的文字。 */
+:root {
+  --diff-add: #2e6a48;
+  --diff-add-bg: color-mix(in oklab, #3e7355 14%, transparent);
+  --diff-del: #a0402b;
+  --diff-del-bg: color-mix(in oklab, #b8432f 10%, transparent);
 }
-.ai-inline-suggestion {
-  color: var(--foreground);
+.dark {
+  --diff-add: #94d2ab;
+  --diff-add-bg: color-mix(in oklab, #6fbf8f 16%, transparent);
+  --diff-del: #efa08e;
+  --diff-del-bg: color-mix(in oklab, #e57a62 14%, transparent);
+}
+.diff-add,
+.diff-del {
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.diff-add {
+  color: var(--diff-add);
+  background: var(--diff-add-bg);
+  text-decoration: none;
+}
+.diff-del {
+  color: var(--diff-del);
+  background: var(--diff-del-bg);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in oklab, var(--diff-del) 55%, transparent);
+}
+
+/*
+ * 编辑器里的划词改写只是装饰层，接受前不修改正文：
+ * 生成中原文变淡、新文字跟在后面；生成完成后原地显示逐词差异。
+ */
+.cm-ai-pending {
+  color: var(--muted-foreground);
+  background: color-mix(in oklab, var(--brand) 9%, transparent);
+  border-radius: 3px;
+}
+.cm-ai-insert {
   white-space: pre-wrap;
 }
-.ai-inline-suggestion ins {
-  text-decoration: none;
-  background: var(--brand-soft);
-  border-radius: 0.2em;
+/* 建议所在段落下方留出状态条的位置（与 ai-assistant 里的 ANCHOR_SPACE 一致） */
+.cm-editor .cm-line.cm-ai-anchor {
+  padding-bottom: 44px;
+}
+.cm-ai-stream {
+  margin-left: 0.15em;
+}
+.cm-ai-stream::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  border-radius: 1px;
+  background: var(--brand);
+  animation: cm-ai-caret 1s steps(2, start) infinite;
+}
+@keyframes cm-ai-caret {
+  to {
+    visibility: hidden;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cm-ai-stream::after {
+    animation: none;
+  }
 }

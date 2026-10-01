@@ -1,8 +1,23 @@
+/* 入口唱片：播放时缓慢转动 */
+.music-vinyl {
+  animation: music-spin 14s linear infinite;
+  animation-play-state: paused;
+}
+.music-vinyl[data-playing] {
+  animation-play-state: running;
+}
+@keyframes music-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* 正在播放的律动条 */
 .music-bars i {
   display: block;
-  width: 3px;
+  width: 2px;
   height: 55%;
-  border-radius: 3px;
+  border-radius: 2px;
   background: var(--brand);
   animation: music-wave 950ms ease-in-out infinite alternate;
 }
@@ -12,21 +27,27 @@
 }
 .music-bars i:nth-child(3) {
   animation-delay: -650ms;
-  height: 35%;
+  height: 40%;
 }
-.music-bars i:nth-child(4) {
-  animation-delay: -150ms;
-  height: 75%;
+.music-bars[data-paused] i {
+  animation-play-state: paused;
 }
 @keyframes music-wave {
   from {
-    transform: scaleY(0.4);
+    transform: scaleY(0.35);
   }
   to {
     transform: scaleY(1);
   }
 }
+
+/* 歌词上下渐隐 */
+.music-lyrics {
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .music-vinyl,
   .music-bars i {
     animation: none;
   }

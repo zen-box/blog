@@ -5,7 +5,10 @@ import { getMusicConfig, listMusic } from "@/server/music";
 export const metadata: Metadata = { title: "音乐" };
 export default function AdminMusicPage() {
   return (
-    <AdminPage title="音乐" description="为阅读添一点轻音乐。管理播放列表、歌词、来源与授权署名。">
+    <AdminPage
+      title="音乐"
+      description="陪伴阅读的轻音乐。读者点击才会播放，进入页面不会下载任何音频。"
+    >
       <MusicManager initial={listMusic()} config={getMusicConfig()} />
     </AdminPage>
   );

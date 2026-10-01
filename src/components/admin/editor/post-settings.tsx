@@ -28,6 +28,13 @@ import type { EditorPost } from "@/server/admin";
 import { MediaPicker } from "../media-picker";
 import { TagInput } from "../tag-input";
 import { uploadFiles } from "../upload";
+import {
+  AiMetadataCard,
+  type AiMetadataState,
+  isApplied,
+  type MetaField,
+  MetaSuggestion,
+} from "./ai-metadata";
 
 /** ISO 时间 ↔ <input type="datetime-local"> 的本地时间 */
 function toLocalInput(iso: string | null): string {
@@ -42,16 +49,20 @@ function fromLocalInput(v: string): string | null {
 function Field({
   label,
   hint,
+  suggestion,
   children,
 }: {
   label: string;
   hint?: string;
+  /** AI 给出的建议，显示在输入框下面 */
+  suggestion?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-2">
       <Label className="text-[0.8rem] text-muted-foreground">{label}</Label>
       {children}
+      {suggestion}
       {hint && <p className="text-xs text-subtle">{hint}</p>}
     </div>
   );
@@ -158,7 +169,7 @@ export function PostSettings({
   update,
   categories,
   allTags,
-  onGenerateInfo,
+  meta,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -166,33 +177,43 @@ export function PostSettings({
   update: (patch: Partial<EditorPost>) => void;
   categories: { id: number; name: string }[];
   allTags: string[];
-  onGenerateInfo: () => void;
+  meta: AiMetadataState;
 }) {
   const isPost = post.type === "post";
   const categoryItems = [
     { value: "none", label: "未分类" },
     ...categories.map((c) => ({ value: String(c.id), label: c.name })),
   ];
+  // 页面没有分类、标签和摘要
+  const fields: MetaField[] = isPost
+    ? ["slug", "categoryId", "tags", "excerpt", "seoDescription"]
+    : ["slug", "seoDescription"];
+  const ai = meta.state.status === "done" ? meta.state.data : null;
+  const suggest = (field: MetaField, children: React.ReactNode, mono?: boolean) =>
+    ai && (
+      <MetaSuggestion
+        applied={isApplied(post, ai, field)}
+        onApply={() => meta.apply([field])}
+        mono={mono}
+      >
+        {children}
+      </MetaSuggestion>
+    );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full gap-0 sm:max-w-md">
+      <SheetContent className="gap-0 data-[side=right]:w-full data-[side=right]:sm:max-w-md">
         <SheetHeader className="border-b border-border">
           <SheetTitle>{isPost ? "文章设置" : "页面设置"}</SheetTitle>
           <SheetDescription>修改会在下次保存时生效。</SheetDescription>
         </SheetHeader>
         <div className="flex-1 space-y-6 overflow-y-auto px-4 py-5" data-lenis-prevent>
-          <button
-            type="button"
-            className="h-9 rounded-lg border border-border px-3 text-sm transition-colors hover:bg-muted"
-            onClick={() => {
-              onOpenChange(false);
-              onGenerateInfo();
-            }}
+          <AiMetadataCard meta={meta} fields={fields} post={post} />
+          <Field
+            label="链接"
+            hint="留空将根据标题自动生成拼音链接。"
+            suggestion={suggest("slug", ai?.slug, true)}
           >
-            AI 生成文章信息
-          </button>
-          <Field label="链接" hint="留空将根据标题自动生成拼音链接。">
             <div className="flex items-center rounded-lg border border-input focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
               <span className="pl-2.5 font-mono text-xs text-subtle">
                 {isPost ? "/posts/" : "/"}
@@ -209,7 +230,13 @@ export function PostSettings({
 
           {isPost && (
             <>
-              <Field label="分类">
+              <Field
+                label="分类"
+                suggestion={suggest(
+                  "categoryId",
+                  ai && (categories.find((c) => c.id === ai.categoryId)?.name ?? "不设置分类"),
+                )}
+              >
                 <Select
                   items={categoryItems}
                   value={post.categoryId ? String(post.categoryId) : "none"}
@@ -230,7 +257,24 @@ export function PostSettings({
                 </Select>
               </Field>
 
-              <Field label="标签">
+              <Field
+                label="标签"
+                suggestion={suggest(
+                  "tags",
+                  ai && (
+                    <span className="flex flex-wrap gap-1">
+                      {ai.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-md border border-border/70 bg-card px-1.5 leading-5"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </span>
+                  ),
+                )}
+              >
                 <TagInput
                   value={post.tags}
                   onChange={(tags) => update({ tags })}
@@ -245,7 +289,11 @@ export function PostSettings({
           </Field>
 
           {isPost && (
-            <Field label="摘要" hint="留空时自动截取正文开头，或 <!-- more --> 之前的内容。">
+            <Field
+              label="摘要"
+              hint="留空时自动截取正文开头，或 <!-- more --> 之前的内容。"
+              suggestion={suggest("excerpt", ai?.excerpt)}
+            >
               <Textarea
                 value={post.excerpt}
                 onChange={(e) => update({ excerpt: e.target.value })}
@@ -287,7 +335,11 @@ export function PostSettings({
             </label>
           </div>
 
-          <Field label="SEO 描述" hint="搜索引擎结果中显示的描述，留空时使用摘要。">
+          <Field
+            label="SEO 描述"
+            hint="搜索引擎结果中显示的描述，留空时使用摘要。"
+            suggestion={suggest("seoDescription", ai?.seoDescription)}
+          >
             <Textarea
               value={post.seoDescription}
               onChange={(e) => update({ seoDescription: e.target.value })}
