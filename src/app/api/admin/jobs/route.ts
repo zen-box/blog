@@ -3,7 +3,8 @@ import { z } from "zod";
 
 import { db, schema } from "@/db";
 import { adminJson, aiHttpError, guardAiAdmin, readAdminJson } from "@/server/ai-http";
-import { cancelJob, jobCounts, listJobs, publicJob } from "@/server/background-jobs";
+import { cancelJob, getJob, jobCounts, listJobs, publicJob } from "@/server/background-jobs";
+import { isAudioJob, retryAudioJob } from "@/server/post-audio";
 import { retryReaderJob } from "@/server/reader-ai";
 
 export const runtime = "nodejs";
@@ -42,8 +43,12 @@ export async function POST(request: Request) {
   if (denied) return denied;
   try {
     const input = operation.parse(await readAdminJson(request));
+    if (input.op === "cancel") return adminJson({ job: publicJob(cancelJob(input.jobId)) });
+    const job = getJob(input.jobId);
     return adminJson({
-      job: publicJob(input.op === "retry" ? retryReaderJob(input.jobId) : cancelJob(input.jobId)),
+      job: publicJob(
+        job && isAudioJob(job.type) ? retryAudioJob(input.jobId) : retryReaderJob(input.jobId),
+      ),
     });
   } catch (error) {
     return aiHttpError(error);

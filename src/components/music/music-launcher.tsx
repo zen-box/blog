@@ -10,7 +10,8 @@ import {
 } from "@/lib/music";
 
 import { MusicCapsule } from "./music-capsule";
-export type AudioRequest = { track: PlayerTrack; nonce: number };
+/** position 有值时从这里开始播放（例如「从这一段听」），否则同一首再点一次就暂停 */
+export type AudioRequest = { track: PlayerTrack; nonce: number; position?: number };
 const Player = dynamic(() => import("./music-player"), {
   ssr: false,
   loading: () => <MusicCapsule title="轻音乐" subtitle="正在打开…" aria-busy="true" disabled />,
@@ -34,9 +35,10 @@ export function MusicLauncher({ config, tracks }: { config: MusicConfig; tracks:
   const saved = readPlayback(raw);
   useEffect(() => {
     const play = (event: Event) => {
-      const track = (event as CustomEvent<PlayerTrack>).detail;
-      if (!track || !safeMediaUrl(track.audioUrl)) return;
-      setRequest({ track, nonce: Date.now() });
+      const detail = (event as CustomEvent<PlayerTrack & { position?: number }>).detail;
+      if (!detail || !safeMediaUrl(detail.audioUrl)) return;
+      const { position, ...track } = detail;
+      setRequest({ track, nonce: Date.now(), position });
       setLoaded(true);
     };
     window.addEventListener("blog:play-audio", play);

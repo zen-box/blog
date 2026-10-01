@@ -12,7 +12,7 @@ import { administratorAiPost, trustedBackgroundAiPost, isPrivateAddress } from "
 
 export const aiRunSchema = z
   .object({
-    task: z.enum(["rewrite", "format", "proofread", "polish", "metadata"]),
+    task: z.enum(["rewrite", "format", "proofread", "polish", "metadata", "podcast"]),
     title: z.string().max(200),
     content: z.string().max(500000),
     instruction: z.string().max(10000).optional(),
@@ -46,11 +46,13 @@ const actions: Record<AiRunInput["task"], string> = {
   format: "只整理 Markdown 排版，不改写文字和事实。保留自定义 Markdown 语法。",
   proofread: "只纠正错别字、标点和明显语法错误，尽可能保持原文。",
   polish: "润色表达与段落衔接，保留原意和事实，不添加未经提供的信息。",
+  podcast:
+    "把文章改写成两位主播的中文对话播客稿，instruction 里给出两位主播的名字和大致长度。要求：口语化、自然，有来有回，像两个朋友在聊这篇文章；忠于原文，不编造事实和数据；代码、命令和测评数字用口语概括要点；开头一两句问候并点出主题，结尾简短总结。每行一句台词，格式为「名字：台词」，不要输出标题、旁白或其他内容。可以在台词里少量加入语气标签，例如（轻笑）（停顿）（惊讶）。",
   metadata:
     "为文章生成元数据。只返回 JSON 对象 {excerpt,seoDescription,slug,tags:string[],categoryId:number|null}。摘要最多500字、SEO描述最多300字、slug最多120字（小写英文数字短横线）。分类仅选择给定分类的id或null，标签最多20项，每项最多40字。不要用代码围栏。",
 };
 function promptFor(input: AiRunInput) {
-  let system = `${actions[input.task]}\n保持 __BLOG_AI_KEEP_<id>__ 占位符完全不变，不得增删或改动任何占位符。不要输出思考过程、解释、前言或代码围栏。${input.task === "metadata" ? "" : "只输出完整 Markdown 正文。"}`;
+  let system = `${actions[input.task]}\n保持 __BLOG_AI_KEEP_<id>__ 占位符完全不变，不得增删或改动任何占位符。不要输出思考过程、解释、前言或代码围栏。${input.task === "metadata" || input.task === "podcast" ? "" : "只输出完整 Markdown 正文。"}`;
   if (input.task === "format") system += `\n本站 Markdown 语法指南：\n${MARKDOWN_GUIDE}`;
   if (input.task === "metadata") {
     const categories = db

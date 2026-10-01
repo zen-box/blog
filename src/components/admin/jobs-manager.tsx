@@ -23,7 +23,11 @@ const FILTERS: { key: Filter; label: string; match: (s: JobStatus) => boolean }[
   { key: "cancelled", label: "已取消", match: (s) => s === "cancelled" },
 ];
 
-const TYPE_LABEL: Record<string, string> = { summary: "生成 AI 摘要" };
+const TYPE_LABEL: Record<string, string> = {
+  summary: "生成 AI 摘要",
+  narration: "合成文章朗读",
+  podcast: "合成 AI 播客",
+};
 
 export function JobsManager() {
   const [jobs, setJobs] = useState<ReaderJobView[]>([]);

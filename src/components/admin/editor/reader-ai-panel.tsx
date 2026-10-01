@@ -3,6 +3,7 @@
 import {
   FileTextIcon,
   GaugeIcon,
+  HeadphonesIcon,
   LoaderCircleIcon,
   RotateCcwIcon,
   SparklesIcon,
@@ -31,9 +32,10 @@ import { cn } from "@/lib/utils";
 
 import { useConfirm } from "../confirm";
 import { ACTIVE_JOB, JOB_STATUS } from "../job-status";
+import { AudioPanel } from "./audio-panel";
 
 type Proposal = BenchmarkExtraction & { contentHash: string };
-type Tab = "summary" | "benchmark";
+type Tab = "summary" | "benchmark" | "listen";
 
 function Note({
   tone = "muted",
@@ -233,6 +235,7 @@ function ReaderAiBody({ postId, dirty }: { postId: number; dirty: boolean }) {
           : "bg-emerald-500"
         : undefined,
     },
+    { key: "listen", label: "收听", icon: <HeadphonesIcon className="size-3.5" /> },
   ];
 
   return (
@@ -265,308 +268,322 @@ function ReaderAiBody({ postId, dirty }: { postId: number; dirty: boolean }) {
         </div>
       </SheetHeader>
 
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5" data-lenis-prevent>
-        {changed && <Note tone="warn">正文有未保存的变化，请保存后再管理读者 AI 内容。</Note>}
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        )}
-        {!state ? (
-          <div className="space-y-3">
-            <Skeleton className="h-3.5 w-32" />
-            <Skeleton className="h-36 w-full rounded-xl" />
-          </div>
-        ) : tab === "summary" ? (
-          <>
-            <Visibility
-              exists={!!state.summary}
-              stale={state.stale.summary}
-              hidden={!state.config.showSummary}
-              updatedAt={state.summary?.updatedAt}
-              now={now}
-            />
-            {!state.config.enabled && (
-              <Note>
-                读者 AI 已在
-                <Link href="/admin/ai" className="mx-1 text-brand hover:underline">
-                  AI 助手
-                </Link>
-                页面关闭，开启后才能生成摘要。
-              </Note>
+      {tab === "listen" ? (
+        <AudioPanel postId={postId} dirty={dirty} />
+      ) : (
+        <>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5" data-lenis-prevent>
+            {changed && <Note tone="warn">正文有未保存的变化，请保存后再管理读者 AI 内容。</Note>}
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
             )}
-            <div className="overflow-hidden rounded-xl border border-input transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
-              <Textarea
-                aria-label="读者 AI 摘要"
-                maxLength={500}
-                className="min-h-40 resize-none rounded-none border-0 bg-transparent px-3.5 py-3 leading-relaxed shadow-none focus-visible:ring-0 dark:bg-transparent"
-                value={text}
-                onChange={(event) => {
-                  edited.current = true;
-                  setText(event.target.value);
-                }}
-                placeholder="用两三句话告诉读者这篇文章讲了什么。可以让 AI 先写一版，再自己改。"
-              />
-              <div className="flex items-center gap-2 border-t border-border/60 px-2 py-1.5">
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  className="text-brand hover:text-brand"
-                  disabled={busy || changed || !state.config.enabled || running}
-                  onClick={() => void generate()}
-                >
-                  <SparklesIcon />
-                  {state.summary || text ? "让 AI 重写" : "AI 生成"}
-                </Button>
-                {running && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <LoaderCircleIcon className="size-3 animate-spin" />
-                    正在生成…
-                  </span>
-                )}
-                <span className="ml-auto pr-1 font-mono text-[11px] text-subtle tabular-nums">
-                  {text.length}/500
-                </span>
+            {!state ? (
+              <div className="space-y-3">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-36 w-full rounded-xl" />
               </div>
-            </div>
-            {state.jobs.length > 0 && (
-              <section aria-labelledby="reader-jobs">
-                <h3 id="reader-jobs" className="mb-2 text-xs font-medium text-subtle">
-                  生成记录
-                </h3>
-                <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border">
-                  {state.jobs.map((job) => {
-                    const status = JOB_STATUS[job.status];
+            ) : tab === "summary" ? (
+              <>
+                <Visibility
+                  exists={!!state.summary}
+                  stale={state.stale.summary}
+                  hidden={!state.config.showSummary}
+                  updatedAt={state.summary?.updatedAt}
+                  now={now}
+                />
+                {!state.config.enabled && (
+                  <Note>
+                    读者 AI 已在
+                    <Link href="/admin/ai" className="mx-1 text-brand hover:underline">
+                      AI 助手
+                    </Link>
+                    页面关闭，开启后才能生成摘要。
+                  </Note>
+                )}
+                <div className="overflow-hidden rounded-xl border border-input transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
+                  <Textarea
+                    aria-label="读者 AI 摘要"
+                    maxLength={500}
+                    className="min-h-40 resize-none rounded-none border-0 bg-transparent px-3.5 py-3 leading-relaxed shadow-none focus-visible:ring-0 dark:bg-transparent"
+                    value={text}
+                    onChange={(event) => {
+                      edited.current = true;
+                      setText(event.target.value);
+                    }}
+                    placeholder="用两三句话告诉读者这篇文章讲了什么。可以让 AI 先写一版，再自己改。"
+                  />
+                  <div className="flex items-center gap-2 border-t border-border/60 px-2 py-1.5">
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      className="text-brand hover:text-brand"
+                      disabled={busy || changed || !state.config.enabled || running}
+                      onClick={() => void generate()}
+                    >
+                      <SparklesIcon />
+                      {state.summary || text ? "让 AI 重写" : "AI 生成"}
+                    </Button>
+                    {running && (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <LoaderCircleIcon className="size-3 animate-spin" />
+                        正在生成…
+                      </span>
+                    )}
+                    <span className="ml-auto pr-1 font-mono text-[11px] text-subtle tabular-nums">
+                      {text.length}/500
+                    </span>
+                  </div>
+                </div>
+                {state.jobs.length > 0 && (
+                  <section aria-labelledby="reader-jobs">
+                    <h3 id="reader-jobs" className="mb-2 text-xs font-medium text-subtle">
+                      生成记录
+                    </h3>
+                    <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border">
+                      {state.jobs.map((job) => {
+                        const status = JOB_STATUS[job.status];
+                        return (
+                          <li
+                            key={job.id}
+                            className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3.5 py-2.5"
+                          >
+                            <span
+                              className={cn(
+                                "grid size-6 shrink-0 place-items-center rounded-full",
+                                status.tone,
+                              )}
+                            >
+                              {status.icon}
+                            </span>
+                            <span className="text-sm">{status.label}</span>
+                            <span className="text-xs text-subtle">
+                              {job.authorization === "auto" ? "发布后自动" : "手动"} · 第{" "}
+                              {job.attempts}/{job.maxAttempts} 次 ·{" "}
+                              {formatRelative(job.updatedAt, now)}
+                            </span>
+                            {ACTIVE_JOB.includes(job.status) ? (
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                className="ml-auto"
+                                disabled={busy || changed}
+                                onClick={() => void jobAction(job, "cancel")}
+                              >
+                                取消
+                              </Button>
+                            ) : ["failed", "cancelled"].includes(job.status) ? (
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                className="ml-auto"
+                                disabled={busy || changed}
+                                onClick={() => void jobAction(job, "retry")}
+                              >
+                                <RotateCcwIcon />
+                                重试
+                              </Button>
+                            ) : null}
+                            {job.error && (
+                              <p className="basis-full pl-9 text-xs leading-relaxed text-destructive">
+                                {job.error}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                )}
+              </>
+            ) : proposal ? (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-foreground">
+                    从测试报告里找到 {proposal.items.length} 项指标
+                    <span className="block text-xs text-muted-foreground">
+                      勾选要公开的，核对原文依据后保存
+                    </span>
+                  </p>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() =>
+                      setSelected(
+                        selected.length === proposal.items.length
+                          ? []
+                          : proposal.items.map((item) => item.key),
+                      )
+                    }
+                  >
+                    {selected.length === proposal.items.length ? "全不选" : "全选"}
+                  </Button>
+                </div>
+                <ul className="space-y-2" aria-label="待确认的测评指标">
+                  {proposal.items.map((item) => {
+                    const checked = selected.includes(item.key);
                     return (
-                      <li
-                        key={job.id}
-                        className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3.5 py-2.5"
-                      >
-                        <span
+                      <li key={item.key}>
+                        <label
                           className={cn(
-                            "grid size-6 shrink-0 place-items-center rounded-full",
-                            status.tone,
+                            "flex cursor-pointer gap-3 rounded-xl border px-3.5 py-3 transition-colors",
+                            checked
+                              ? "border-brand/40 bg-brand-soft/35"
+                              : "border-border hover:bg-muted/50",
                           )}
                         >
-                          {status.icon}
-                        </span>
-                        <span className="text-sm">{status.label}</span>
-                        <span className="text-xs text-subtle">
-                          {job.authorization === "auto" ? "发布后自动" : "手动"} · 第 {job.attempts}
-                          /{job.maxAttempts} 次 · {formatRelative(job.updatedAt, now)}
-                        </span>
-                        {ACTIVE_JOB.includes(job.status) ? (
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            className="ml-auto"
-                            disabled={busy || changed}
-                            onClick={() => void jobAction(job, "cancel")}
-                          >
-                            取消
-                          </Button>
-                        ) : ["failed", "cancelled"].includes(job.status) ? (
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            className="ml-auto"
-                            disabled={busy || changed}
-                            onClick={() => void jobAction(job, "retry")}
-                          >
-                            <RotateCcwIcon />
-                            重试
-                          </Button>
-                        ) : null}
-                        {job.error && (
-                          <p className="basis-full pl-9 text-xs leading-relaxed text-destructive">
-                            {job.error}
-                          </p>
-                        )}
+                          <Checkbox
+                            className="mt-0.5"
+                            checked={checked}
+                            onCheckedChange={(value) =>
+                              setSelected((current) =>
+                                value
+                                  ? [...current, item.key]
+                                  : current.filter((key) => key !== item.key),
+                              )
+                            }
+                          />
+                          <span className="min-w-0">
+                            <span className="block text-xs text-muted-foreground">
+                              {item.label}
+                            </span>
+                            <span className="block text-sm break-words">{item.value}</span>
+                            {item.evidence.map((evidence) => (
+                              <span
+                                key={evidence.line}
+                                className="mt-1 block truncate font-mono text-[11px] text-subtle"
+                                title={evidence.text}
+                              >
+                                L{evidence.line} {evidence.text}
+                              </span>
+                            ))}
+                          </span>
+                        </label>
                       </li>
                     );
                   })}
                 </ul>
-              </section>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">一句话结论</p>
+                  <Textarea
+                    aria-label="测评速览结论"
+                    maxLength={500}
+                    value={conclusion}
+                    onChange={(event) => setConclusion(event.target.value)}
+                  />
+                </div>
+              </>
+            ) : state.benchmark ? (
+              <>
+                <Visibility
+                  exists
+                  stale={state.stale.benchmark}
+                  hidden={!state.config.showBenchmark}
+                  updatedAt={state.benchmark.updatedAt}
+                  now={now}
+                />
+                <div className="overflow-hidden rounded-xl border border-border">
+                  <p className="px-4 py-3 text-sm leading-relaxed">{state.benchmark.conclusion}</p>
+                  <dl className="grid grid-cols-2 gap-px border-t border-border/70 bg-border/70">
+                    {state.benchmark.items.map((item) => (
+                      <div key={item.key} className="bg-card px-4 py-2.5">
+                        <dt className="text-[11px] text-muted-foreground">{item.label}</dt>
+                        <dd className="mt-0.5 text-sm break-words">{item.value}</dd>
+                      </div>
+                    ))}
+                    {state.benchmark.items.length % 2 === 1 && (
+                      <div aria-hidden className="bg-card" />
+                    )}
+                  </dl>
+                </div>
+              </>
+            ) : (
+              <div className="py-10 text-center">
+                <GaugeIcon className="mx-auto size-5 text-subtle" />
+                <p className="mt-3 text-sm">还没有测评速览</p>
+                <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">
+                  文章里有 NodeQuality 或 Check.Place
+                  的测试报告时，可以提取关键指标，确认后显示给读者。
+                </p>
+              </div>
             )}
-          </>
-        ) : proposal ? (
-          <>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm text-foreground">
-                从测试报告里找到 {proposal.items.length} 项指标
-                <span className="block text-xs text-muted-foreground">
-                  勾选要公开的，核对原文依据后保存
-                </span>
-              </p>
-              <Button
-                size="xs"
-                variant="ghost"
-                onClick={() =>
-                  setSelected(
-                    selected.length === proposal.items.length
-                      ? []
-                      : proposal.items.map((item) => item.key),
-                  )
-                }
-              >
-                {selected.length === proposal.items.length ? "全不选" : "全选"}
-              </Button>
-            </div>
-            <ul className="space-y-2" aria-label="待确认的测评指标">
-              {proposal.items.map((item) => {
-                const checked = selected.includes(item.key);
-                return (
-                  <li key={item.key}>
-                    <label
-                      className={cn(
-                        "flex cursor-pointer gap-3 rounded-xl border px-3.5 py-3 transition-colors",
-                        checked
-                          ? "border-brand/40 bg-brand-soft/35"
-                          : "border-border hover:bg-muted/50",
-                      )}
-                    >
-                      <Checkbox
-                        className="mt-0.5"
-                        checked={checked}
-                        onCheckedChange={(value) =>
-                          setSelected((current) =>
-                            value
-                              ? [...current, item.key]
-                              : current.filter((key) => key !== item.key),
-                          )
-                        }
-                      />
-                      <span className="min-w-0">
-                        <span className="block text-xs text-muted-foreground">{item.label}</span>
-                        <span className="block text-sm break-words">{item.value}</span>
-                        {item.evidence.map((evidence) => (
-                          <span
-                            key={evidence.line}
-                            className="mt-1 block truncate font-mono text-[11px] text-subtle"
-                            title={evidence.text}
-                          >
-                            L{evidence.line} {evidence.text}
-                          </span>
-                        ))}
-                      </span>
-                    </label>
-                  </li>
-                );
-              })}
-            </ul>
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">一句话结论</p>
-              <Textarea
-                aria-label="测评速览结论"
-                maxLength={500}
-                value={conclusion}
-                onChange={(event) => setConclusion(event.target.value)}
-              />
-            </div>
-          </>
-        ) : state.benchmark ? (
-          <>
-            <Visibility
-              exists
-              stale={state.stale.benchmark}
-              hidden={!state.config.showBenchmark}
-              updatedAt={state.benchmark.updatedAt}
-              now={now}
-            />
-            <div className="overflow-hidden rounded-xl border border-border">
-              <p className="px-4 py-3 text-sm leading-relaxed">{state.benchmark.conclusion}</p>
-              <dl className="grid grid-cols-2 gap-px border-t border-border/70 bg-border/70">
-                {state.benchmark.items.map((item) => (
-                  <div key={item.key} className="bg-card px-4 py-2.5">
-                    <dt className="text-[11px] text-muted-foreground">{item.label}</dt>
-                    <dd className="mt-0.5 text-sm break-words">{item.value}</dd>
-                  </div>
-                ))}
-                {state.benchmark.items.length % 2 === 1 && <div aria-hidden className="bg-card" />}
-              </dl>
-            </div>
-          </>
-        ) : (
-          <div className="py-10 text-center">
-            <GaugeIcon className="mx-auto size-5 text-subtle" />
-            <p className="mt-3 text-sm">还没有测评速览</p>
-            <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">
-              文章里有 NodeQuality 或 Check.Place 的测试报告时，可以提取关键指标，确认后显示给读者。
-            </p>
           </div>
-        )}
-      </div>
 
-      {state && (
-        <footer className="flex items-center gap-2 border-t border-border px-5 py-3">
-          {tab === "summary" ? (
-            <>
-              {state.summary && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                  disabled={busy || changed}
-                  onClick={async () => {
-                    if (await confirm({ title: "清除这篇文章的 AI 摘要？", confirmText: "清除" }))
-                      await saveSummary("");
-                  }}
-                >
-                  清除摘要
-                </Button>
+          {state && (
+            <footer className="flex items-center gap-2 border-t border-border px-5 py-3">
+              {tab === "summary" ? (
+                <>
+                  {state.summary && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground"
+                      disabled={busy || changed}
+                      onClick={async () => {
+                        if (
+                          await confirm({ title: "清除这篇文章的 AI 摘要？", confirmText: "清除" })
+                        )
+                          await saveSummary("");
+                      }}
+                    >
+                      清除摘要
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    className="ml-auto"
+                    disabled={busy || changed || (!text.trim() && !state.summary)}
+                    onClick={() => void saveSummary()}
+                  >
+                    保存摘要
+                  </Button>
+                </>
+              ) : proposal ? (
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => setProposal(null)}>
+                    放弃
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="ml-auto"
+                    disabled={busy || changed || !selected.length || !conclusion.trim()}
+                    onClick={() => void saveBenchmark()}
+                  >
+                    公开 {selected.length} 项指标
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {state.benchmark && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground"
+                      disabled={busy || changed}
+                      onClick={async () => {
+                        if (await confirm({ title: "清除已公开的测评速览？", confirmText: "清除" }))
+                          await saveBenchmark(true);
+                      }}
+                    >
+                      清除速览
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant={state.benchmark ? "outline" : "default"}
+                    className="ml-auto"
+                    disabled={busy || changed}
+                    onClick={() => void extract()}
+                  >
+                    {busy ? <LoaderCircleIcon className="animate-spin" /> : <GaugeIcon />}
+                    {state.benchmark ? "重新提取" : "提取测评指标"}
+                  </Button>
+                </>
               )}
-              <Button
-                size="sm"
-                className="ml-auto"
-                disabled={busy || changed || (!text.trim() && !state.summary)}
-                onClick={() => void saveSummary()}
-              >
-                保存摘要
-              </Button>
-            </>
-          ) : proposal ? (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => setProposal(null)}>
-                放弃
-              </Button>
-              <Button
-                size="sm"
-                className="ml-auto"
-                disabled={busy || changed || !selected.length || !conclusion.trim()}
-                onClick={() => void saveBenchmark()}
-              >
-                公开 {selected.length} 项指标
-              </Button>
-            </>
-          ) : (
-            <>
-              {state.benchmark && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                  disabled={busy || changed}
-                  onClick={async () => {
-                    if (await confirm({ title: "清除已公开的测评速览？", confirmText: "清除" }))
-                      await saveBenchmark(true);
-                  }}
-                >
-                  清除速览
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant={state.benchmark ? "outline" : "default"}
-                className="ml-auto"
-                disabled={busy || changed}
-                onClick={() => void extract()}
-              >
-                {busy ? <LoaderCircleIcon className="animate-spin" /> : <GaugeIcon />}
-                {state.benchmark ? "重新提取" : "提取测评指标"}
-              </Button>
-            </>
+            </footer>
           )}
-        </footer>
+        </>
       )}
     </>
   );

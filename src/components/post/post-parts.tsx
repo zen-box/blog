@@ -20,7 +20,16 @@ import { LikeButton } from "./like-button";
 import { ShareButton } from "./share-button";
 import { ViewCounter } from "./view-counter";
 
-export function PostHero({ post, commentCount }: { post: PostDetail; commentCount: number }) {
+export function PostHero({
+  post,
+  commentCount,
+  listen,
+}: {
+  post: PostDetail;
+  commentCount: number;
+  /** 标题下方的「收听本文」 */
+  listen?: React.ReactNode;
+}) {
   const isPage = post.type === "page";
   return (
     <>
@@ -64,6 +73,7 @@ export function PostHero({ post, commentCount }: { post: PostDetail; commentCoun
             </a>
           </div>
         )}
+        {listen && <div className="mt-6">{listen}</div>}
       </header>
 
       {post.cover && (

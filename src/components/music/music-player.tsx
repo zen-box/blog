@@ -8,6 +8,9 @@ import {
   PlayIcon,
   Repeat1Icon,
   RepeatIcon,
+  RotateCcwIcon,
+  RotateCwIcon,
+  ScrollTextIcon,
   ShuffleIcon,
   SkipBackIcon,
   SkipForwardIcon,
@@ -50,6 +53,8 @@ import { MusicCapsule } from "./music-capsule";
 import "./music.css";
 
 const MODES = { list: "列表循环", single: "单曲循环", shuffle: "随机播放" } as const;
+/** 朗读、播客可选的倍速，点按依次切换 */
+const RATES = [1, 1.25, 1.5, 2, 0.75];
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 const subscribeMobile = (callback: () => void) => {
@@ -94,7 +99,7 @@ function IconButton({
   );
 }
 
-/** 歌词：当前句居中，上下渐隐 */
+/** 歌词（朗读、播客时是文字稿）：当前句居中，上下渐隐 */
 function Lyrics({ track, position }: { track: AudioSnapshot["track"]; position: number }) {
   const lines = parseLrc(track?.lyrics ?? "");
   const active = lyricAt(lines, position);
@@ -112,14 +117,14 @@ function Lyrics({ track, position }: { track: AudioSnapshot["track"]; position: 
   if (!lines.length)
     return (
       <div className="grid h-full place-items-center text-xs text-muted-foreground">
-        这首曲子没有歌词，安静地听吧
+        {typeof track?.id === "string" ? "这段音频没有文字稿" : "这首曲子没有歌词，安静地听吧"}
       </div>
     );
   return (
     <div
       ref={box}
       role="region"
-      aria-label="歌词"
+      aria-label={typeof track?.id === "string" ? "文字稿" : "歌词"}
       tabIndex={0}
       className="music-lyrics relative h-full overflow-y-auto py-16 text-center outline-none"
       data-lenis-prevent
@@ -159,7 +164,8 @@ export default function MusicPlayer({
     () => matchMedia("(max-width: 639px)").matches,
     () => false,
   );
-  const [open, setOpen] = useState(true);
+  // 文章页点「收听」时只在角落显示胶囊，不弹出面板挡住正文
+  const [open, setOpen] = useState(() => !request);
   const [tab, setTab] = useState<"lyrics" | "list">(() =>
     parseLrc(state.track?.lyrics ?? "").length ? "lyrics" : "list",
   );
@@ -189,7 +195,8 @@ export default function MusicPlayer({
   useEffect(() => {
     if (!request) return;
     const current = engine.getSnapshot();
-    if (current.track?.audioUrl === request.track.audioUrl && current.playing) engine.pause();
+    if (request.position !== undefined) void engine.play(request.track, request.position);
+    else if (current.track?.audioUrl === request.track.audioUrl && current.playing) engine.pause();
     else void engine.play(request.track);
   }, [engine, request]);
 
@@ -203,12 +210,16 @@ export default function MusicPlayer({
   const VolumeIcon =
     state.volume === 0 ? VolumeXIcon : state.volume < 0.5 ? Volume1Icon : Volume2Icon;
   const hasLyrics = parseLrc(track?.lyrics ?? "").length > 0;
+  // 朗读、播客：前进后退 15 秒、倍速，代替上一首、下一首和循环模式
+  const voice = typeof track?.id === "string";
 
   const capsule = (
     <MusicCapsule
       aria-label={open ? "收起音乐播放器" : "打开音乐播放器"}
       title={track?.title ?? "轻音乐"}
-      subtitle={state.loading ? "缓冲中…" : busy ? meta || "正在播放" : "已暂停"}
+      subtitle={
+        state.loading ? "缓冲中…" : busy ? meta || (voice ? "正在朗读" : "正在播放") : "已暂停"
+      }
       cover={track?.coverUrl || undefined}
       playing={state.playing}
       progress={duration ? position / duration : 0}
@@ -269,20 +280,42 @@ export default function MusicPlayer({
         </div>
 
         <div className="mt-1 flex items-center justify-between">
-          <IconButton
-            label={`${MODES[state.mode]}（点按切换）`}
-            onClick={() =>
-              engine.setMode(
-                state.mode === "list" ? "single" : state.mode === "single" ? "shuffle" : "list",
-              )
-            }
-            className={cn(state.mode !== "list" && "text-brand")}
-          >
-            <ModeIcon />
-          </IconButton>
-          <IconButton label="上一首" disabled={!tracks.length} onClick={() => void engine.next(-1)}>
-            <SkipBackIcon />
-          </IconButton>
+          {voice ? (
+            <IconButton
+              label={`倍速 ${state.rate}×（点按切换）`}
+              onClick={() =>
+                engine.setRate(RATES[(RATES.indexOf(state.rate) + 1) % RATES.length] ?? 1)
+              }
+              className={cn("w-12 font-mono text-xs", state.rate !== 1 && "text-brand")}
+            >
+              {state.rate}×
+            </IconButton>
+          ) : (
+            <IconButton
+              label={`${MODES[state.mode]}（点按切换）`}
+              onClick={() =>
+                engine.setMode(
+                  state.mode === "list" ? "single" : state.mode === "single" ? "shuffle" : "list",
+                )
+              }
+              className={cn(state.mode !== "list" && "text-brand")}
+            >
+              <ModeIcon />
+            </IconButton>
+          )}
+          {voice ? (
+            <IconButton label="后退 15 秒" onClick={() => engine.seek(state.position - 15)}>
+              <RotateCcwIcon />
+            </IconButton>
+          ) : (
+            <IconButton
+              label="上一首"
+              disabled={!tracks.length}
+              onClick={() => void engine.next(-1)}
+            >
+              <SkipBackIcon />
+            </IconButton>
+          )}
           <button
             type="button"
             aria-label={busy ? "暂停" : "播放"}
@@ -296,9 +329,19 @@ export default function MusicPlayer({
               <PlayIcon className="size-5 translate-x-px" />
             )}
           </button>
-          <IconButton label="下一首" disabled={!tracks.length} onClick={() => void engine.next(1)}>
-            <SkipForwardIcon />
-          </IconButton>
+          {voice ? (
+            <IconButton label="前进 15 秒" onClick={() => engine.seek(state.position + 15)}>
+              <RotateCwIcon />
+            </IconButton>
+          ) : (
+            <IconButton
+              label="下一首"
+              disabled={!tracks.length}
+              onClick={() => void engine.next(1)}
+            >
+              <SkipForwardIcon />
+            </IconButton>
+          )}
           <IconButton
             label="音量"
             aria-expanded={volumeOpen}
@@ -353,7 +396,7 @@ export default function MusicPlayer({
         <div role="tablist" aria-label="歌词与播放列表" className="flex gap-1 px-4 pt-2.5">
           {(
             [
-              ["lyrics", "歌词", MicVocalIcon],
+              ["lyrics", voice ? "文字稿" : "歌词", voice ? ScrollTextIcon : MicVocalIcon],
               ["list", `播放列表 · ${tracks.length}`, ListMusicIcon],
             ] as const
           ).map(([key, label, Icon]) => (

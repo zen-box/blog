@@ -59,6 +59,40 @@ export function insertSummaryJob(input: {
     .run();
   return db.select().from(jobs).where(eq(jobs.dedupeKey, dedupeKey)).get()!;
 }
+/** 文章音频（朗读、播客）等任务；每次请求都是新任务，靠 revision 丢弃过时结果 */
+export function insertJob(input: {
+  type: string;
+  postId: number;
+  contentHash: string;
+  revision: number;
+  authorization: "admin" | "auto";
+}) {
+  const now = Date.now();
+  const id = randomUUID();
+  db.insert(jobs)
+    .values({
+      id,
+      type: input.type,
+      postId: input.postId,
+      contentHash: input.contentHash,
+      payload: { revision: input.revision },
+      authorization: input.authorization,
+      dedupeKey: `${input.type}:${input.postId}:${input.revision}:${id}`,
+      availableAt: now,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .run();
+  return getJob(id)!;
+}
+/** 同一篇文章同类的排队任务已经过时，直接取消，免得白白调用服务 */
+export function cancelQueuedJobs(postId: number, type: string) {
+  getSqlite()
+    .prepare(
+      "UPDATE background_jobs SET status='cancelled', error='已有更新的请求', updated_at=? WHERE post_id=? AND type=? AND status IN ('pending','retry')",
+    )
+    .run(Date.now(), postId, type);
+}
 export function cancelJob(id: string) {
   getSqlite()
     .prepare(
@@ -82,7 +116,7 @@ export function retryJob(id: string, contentHash: string, revision: number) {
       attempts: 0,
       error: null,
       contentHash,
-      dedupeKey: `summary:${job.postId}:${contentHash}:retry:${randomUUID()}`,
+      dedupeKey: `${job.type}:${job.postId}:${contentHash}:retry:${randomUUID()}`,
       payload: { revision },
       authorization: "admin",
       leaseToken: null,
@@ -167,6 +201,8 @@ export async function runOne(
     let handler = options.handler ?? handlers.get(job.type);
     if (!handler && job.type === "summary")
       handler = (await import("./reader-ai")).executeSummaryJob;
+    if (!handler && (job.type === "narration" || job.type === "podcast"))
+      handler = (await import("./post-audio")).executeAudioJob;
     if (!handler) throw new AiError("不支持此任务类型", 400);
     const apply = await handler(job, signal);
     if (signal.aborted) throw signal.reason;
@@ -179,7 +215,7 @@ export async function runOne(
             status: applied === false ? "cancelled" : "succeeded",
             leaseToken: null,
             leaseUntil: null,
-            error: applied === false ? "正文或摘要已变化，已丢弃过时结果" : null,
+            error: applied === false ? "内容已变化或有更新的请求，已丢弃过时结果" : null,
             updatedAt: Date.now(),
           })
           .where(eq(jobs.id, job.id))

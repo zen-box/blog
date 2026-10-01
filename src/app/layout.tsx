@@ -9,6 +9,7 @@ import { ThemeScript, ThemeSync } from "@/components/theme";
 import { Toaster } from "@/components/ui/sonner";
 import { getSettings, siteUrl } from "@/lib/settings";
 import { faviconKind, ICON_MIME, iconVersion } from "@/server/brand";
+import { getTtsConfig } from "@/server/tts-config";
 
 // 内容来自 SQLite，每次请求实时渲染（查询是微秒级）
 export const dynamic = "force-dynamic";
@@ -28,7 +29,14 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: s.authorName }],
     alternates: {
       canonical: "/",
-      types: { "application/rss+xml": [{ url: "/feed.xml", title: s.siteTitle }] },
+      types: {
+        "application/rss+xml": [
+          { url: "/feed.xml", title: s.siteTitle },
+          ...(getTtsConfig().enabled
+            ? [{ url: "/podcast.xml", title: `${s.siteTitle} · 播客` }]
+            : []),
+        ],
+      },
     },
     openGraph: {
       type: "website",

@@ -1669,6 +1669,23 @@
   --markmap-highlight-bg: color-mix(in oklab, var(--ochre) 30%, transparent);
 }
 
+/* 朗读时正在读的段落：淡淡的底色，向外扩一点，不影响排版 */
+.prose-blog [data-say] {
+  transition:
+    background-color 0.5s ease,
+    box-shadow 0.5s ease;
+  border-radius: 0.375rem;
+}
+.prose-blog [data-speaking] {
+  background-color: color-mix(in oklab, var(--brand) 8%, transparent);
+  box-shadow: 0 0 0 0.4rem color-mix(in oklab, var(--brand) 8%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .prose-blog [data-say] {
+    transition: none;
+  }
+}
+
 /* 文字差异（版本历史、AI 建议共用）：绿色是新增，红色删除线是删掉的文字。 */
 :root {
   --diff-add: #2e6a48;

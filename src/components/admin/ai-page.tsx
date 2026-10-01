@@ -27,6 +27,13 @@ import type { ReaderAiConfig } from "@/lib/reader-ai";
 import { cn } from "@/lib/utils";
 
 import { SaveBar } from "./save-bar";
+import {
+  type BuiltinVoice,
+  type CustomVoice,
+  type KeySource,
+  type TtsSettings,
+  VoiceBlock,
+} from "./voice-settings";
 
 export type AiConfig = {
   protocol: "openai" | "anthropic";
@@ -304,11 +311,13 @@ export function AiPage({
   initial,
   initialHasKey,
   initialReader,
+  initialTts,
   usage,
 }: {
   initial: AiConfig;
   initialHasKey: boolean;
   initialReader: ReaderAiConfig;
+  initialTts: { config: TtsSettings; keySource: KeySource; builtin: readonly BuiltinVoice[] };
   usage: AiUsageDay[];
 }) {
   const [config, setConfig] = useState(initial);
@@ -323,13 +332,20 @@ export function AiPage({
   const [saving, setSaving] = useState(false);
   const [test, setTest] = useState<TestState>({ state: "idle" });
   const [days, setDays] = useState(usage);
+  const [tts, setTts] = useState(initialTts.config);
+  const [savedTts, setSavedTts] = useState(initialTts.config);
+  const [ttsKeySource, setTtsKeySource] = useState(initialTts.keySource);
+  // 语音服务的密钥：null 表示不改动
+  const [ttsKey, setTtsKey] = useState<string | null>(null);
+  const [ttsAdvanced, setTtsAdvanced] = useState(false);
 
   const preset = presetFor(config.baseUrl);
   const local = isLocalUrl(config.baseUrl);
   const keyChanged = keyMode === "clear" || key.trim() !== "";
   const configDirty = !same(config, saved) || keyChanged;
   const readerDirty = !same(reader, savedReader);
-  const dirty = configDirty || readerDirty;
+  const ttsDirty = !same(tts, savedTts) || Boolean(ttsKey?.trim());
+  const dirty = configDirty || readerDirty || ttsDirty;
   const ready = local || (hasKey && keyMode !== "clear") || key.trim() !== "";
   const providerChanged = presetFor(saved.baseUrl)?.id !== preset?.id && hasKey && !key.trim();
 
@@ -341,6 +357,8 @@ export function AiPage({
   function reset() {
     setConfig(saved);
     setReader(savedReader);
+    setTts(savedTts);
+    setTtsKey(null);
     setKey("");
     setKeyMode(hasKey ? "keep" : "edit");
     setTest({ state: "idle" });
@@ -368,6 +386,19 @@ export function AiPage({
         const data = await postJson("/api/admin/reader-ai", { op: "settings", config: reader });
         setReader(data.config);
         setSavedReader(data.config);
+      }
+      if (ttsDirty) {
+        const { voices: _voices, ...patch } = tts;
+        void _voices;
+        const data = await postJson("/api/admin/tts", {
+          op: "config",
+          config: patch,
+          ...(ttsKey?.trim() ? { apiKey: ttsKey.trim() } : {}),
+        });
+        setTts(data.config);
+        setSavedTts(data.config);
+        setTtsKeySource(data.keySource);
+        setTtsKey(null);
       }
       toast.success("AI 设置已保存");
       return true;
@@ -766,6 +797,116 @@ export function AiPage({
             />
           </div>
         </div>
+      </Block>
+
+      <Block
+        title="文章朗读与 AI 播客"
+        description="用小米 MiMo 语音合成，把文章变成朗读和双人对话播客。音频在后台合成后保存，读者收听不会调用服务。"
+        aside={
+          <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
+            <StatusDot
+              tone={
+                !tts.enabled ? "idle" : ttsKeySource === "none" && !ttsKey?.trim() ? "warn" : "ok"
+              }
+            />
+            {!tts.enabled
+              ? "未开启"
+              : ttsKeySource === "none" && !ttsKey?.trim()
+                ? "还没有密钥"
+                : "已开启"}
+          </span>
+        }
+      >
+        <div className="divide-y divide-border/70">
+          <ToggleRow
+            title="开启文章朗读与播客"
+            description="开启后，可以在编辑器的「读者 AI」里为文章合成朗读、生成播客"
+            checked={tts.enabled}
+            onChange={(enabled) => setTts((t) => ({ ...t, enabled }))}
+          />
+          <ToggleRow
+            title="文章更新后自动重新合成朗读"
+            description="只有改动过的段落会重新合成，其余段落直接用缓存"
+            checked={tts.autoRefresh}
+            disabled={!tts.enabled}
+            onChange={(autoRefresh) => setTts((t) => ({ ...t, autoRefresh }))}
+          />
+        </div>
+        <div className="mt-5 border-t border-border/70 pt-6">
+          <VoiceBlock
+            value={tts}
+            onChange={(patch) => setTts((t) => ({ ...t, ...patch }))}
+            builtin={initialTts.builtin}
+            keySource={ttsKeySource}
+            ownKey={ttsKey}
+            onOwnKey={setTtsKey}
+            onVoices={(voices: CustomVoice[]) => {
+              setTts((t) => ({ ...t, voices }));
+              setSavedTts((t) => ({ ...t, voices }));
+            }}
+            ensureSaved={async () => (dirty ? save() : true)}
+          />
+        </div>
+        <div className="mt-6 flex border-t border-border/70 pt-4">
+          <button
+            type="button"
+            onClick={() => setTtsAdvanced((v) => !v)}
+            aria-expanded={ttsAdvanced}
+            className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            服务地址与模型
+            <ChevronDownIcon
+              className={cn(
+                "size-3.5 transition-transform duration-300",
+                ttsAdvanced && "rotate-180",
+              )}
+            />
+          </button>
+        </div>
+        <AnimatePresence initial={false}>
+          {ttsAdvanced && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.35, ease: EASE }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 grid gap-x-5 gap-y-4 rounded-xl bg-muted/40 px-4 py-4 md:grid-cols-2">
+                <Field label="接口地址" htmlFor="tts-base-url" className="md:col-span-2">
+                  <Input
+                    id="tts-base-url"
+                    value={tts.baseUrl}
+                    onChange={(e) => setTts((t) => ({ ...t, baseUrl: e.target.value }))}
+                    className="font-mono text-[13px] [font-variant-ligatures:none]"
+                  />
+                </Field>
+                <Field label="内置音色模型" htmlFor="tts-model">
+                  <Input
+                    id="tts-model"
+                    value={tts.model}
+                    onChange={(e) => setTts((t) => ({ ...t, model: e.target.value }))}
+                    className="font-mono text-[13px] [font-variant-ligatures:none]"
+                  />
+                </Field>
+                <Field label="声音克隆模型" htmlFor="tts-clone-model">
+                  <Input
+                    id="tts-clone-model"
+                    value={tts.cloneModel}
+                    onChange={(e) => setTts((t) => ({ ...t, cloneModel: e.target.value }))}
+                    className="font-mono text-[13px] [font-variant-ligatures:none]"
+                  />
+                </Field>
+                <ToggleRow
+                  title="经出站代理访问"
+                  description="使用「链接卡片」中设置的代理"
+                  checked={tts.useProxy}
+                  onChange={(useProxy) => setTts((t) => ({ ...t, useProxy }))}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Block>
 
       <UsageBlock days={days} />

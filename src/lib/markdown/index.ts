@@ -24,6 +24,7 @@ import { unified } from "unified";
 
 import { db, schema } from "@/db";
 import type { TocItem } from "@/db/schema";
+import type { SpeechBlock } from "@/lib/post-audio";
 import { resolveUploadUrl } from "@/server/storage";
 
 import { remarkDiagrams } from "./diagrams";
@@ -46,10 +47,11 @@ import {
   remarkMark,
   remarkStats,
 } from "./remark-plugins";
+import { rehypeSpeech } from "./speech";
 import { remarkTerminal } from "./terminal";
 
 /** 渲染管线版本：修改管线后递增，旧文章会在访问或后台操作时重新渲染 */
-export const RENDER_VERSION = 5;
+export const RENDER_VERSION = 6;
 
 export function thumbhashToDataUrl(b64: string): string | undefined {
   try {
@@ -137,6 +139,7 @@ async function createFullProcessor() {
       target: "_blank",
       rel: ["noopener", "noreferrer"],
     })
+    .use(rehypeSpeech)
     .use(rehypeToc)
     .use(rehypeStringify);
 }
@@ -152,6 +155,8 @@ export type RenderResult = {
   wordCount: number;
   readingTime: number;
   excerpt: string;
+  /** 朗读用的正文块，与 HTML 里的 data-say 对应 */
+  speech: SpeechBlock[];
 };
 
 /** 文章 / 页面 / 说说：完整能力，允许原始 HTML（只有管理员能写） */
@@ -166,6 +171,7 @@ export async function renderMarkdown(markdown: string): Promise<RenderResult> {
     wordCount: stats?.wordCount ?? 0,
     readingTime: stats?.readingTime ?? 1,
     excerpt: stats?.excerpt ?? "",
+    speech: file.data.speech ?? [],
   };
 }
 

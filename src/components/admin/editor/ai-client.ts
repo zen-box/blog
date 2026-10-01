@@ -1,4 +1,4 @@
-export type AiTask = "rewrite" | "format" | "proofread" | "polish" | "metadata";
+export type AiTask = "rewrite" | "format" | "proofread" | "polish" | "metadata" | "podcast";
 export async function streamAi(
   input: { task: AiTask; title: string; content: string; instruction?: string; context?: string },
   signal: AbortSignal,

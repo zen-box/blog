@@ -6,7 +6,10 @@ import { getCommentTree } from "@/server/comments";
 import { withLinkCards } from "@/server/link-preview";
 import type { AdjacentPost, PostDetail } from "@/server/posts";
 import { resolveUploadUrl } from "@/server/storage";
+import { getPublicPostAudio } from "@/server/post-audio";
 import { getPublishedReaderInsights } from "@/server/reader-ai";
+
+import { ListenBar } from "./listen-bar";
 import { ReaderInsightsCard } from "./reader-insights";
 
 import { Comments } from "./comments";
@@ -30,6 +33,7 @@ export function ArticleView({
   const url = `${siteUrl()}${isPage ? "" : "/posts"}/${encodeURI(post.slug)}`;
   const toc = post.toc ?? [];
   const showComments = post.allowComments || total > 0;
+  const audios = isPage ? [] : getPublicPostAudio(post.id, post.content);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -48,7 +52,20 @@ export function ArticleView({
     <PageView>
       <ReadingProgress />
       <article>
-        <PostHero post={post} commentCount={total} />
+        <PostHero
+          post={post}
+          commentCount={total}
+          listen={
+            audios.length > 0 && (
+              <ListenBar
+                postId={post.id}
+                title={post.title}
+                cover={post.cover ? resolveUploadUrl(post.cover) : ""}
+                audios={audios}
+              />
+            )
+          }
+        />
 
         <div className="mx-auto mt-12 grid w-full max-w-[82rem] grid-cols-1 px-5 sm:mt-14 md:px-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)] xl:gap-14">
           <div aria-hidden className="hidden xl:block" />
@@ -59,7 +76,9 @@ export function ArticleView({
                 insights={getPublishedReaderInsights(post.id, post.content)}
               />
             )}
-            <PostContent html={withLinkCards(post.html)} />
+            <div data-article-body>
+              <PostContent html={withLinkCards(post.html)} />
+            </div>
           </div>
           <aside className="hidden xl:block">
             <Toc items={toc} />

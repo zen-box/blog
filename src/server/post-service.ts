@@ -151,6 +151,7 @@ export async function savePost(raw: PostInput, reason: SaveReason = "manual"): P
     input.status === "published" &&
     (existing?.status !== "published" || existing.content !== input.content);
   const enqueue = shouldEnqueue ? (await import("./reader-ai")).enqueueAutoSummary : undefined;
+  const narrate = shouldEnqueue ? (await import("./post-audio")).enqueueAutoNarration : undefined;
 
   const saved = db.transaction((tx) => {
     const current = input.id
@@ -189,6 +190,12 @@ export async function savePost(raw: PostInput, reason: SaveReason = "manual"): P
     }
     // Article and authorized background work commit together, including save failures.
     enqueue?.(row);
+    // 已有朗读时自动重新合成；语音服务的问题不能影响保存文章
+    try {
+      narrate?.(row);
+    } catch {
+      /* 在后台任务页可以看到并手动重试 */
+    }
     return row;
   });
 
