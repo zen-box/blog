@@ -49,7 +49,7 @@ import {
 import { remarkTerminal } from "./terminal";
 
 /** 渲染管线版本：修改管线后递增，旧文章会在访问或后台操作时重新渲染 */
-export const RENDER_VERSION = 3;
+export const RENDER_VERSION = 4;
 
 export function thumbhashToDataUrl(b64: string): string | undefined {
   try {

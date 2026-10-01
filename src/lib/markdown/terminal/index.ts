@@ -221,17 +221,18 @@ export function remarkTerminal() {
       if (!parent || index == null) return;
       const lang = (c.lang ?? "").toLowerCase();
       const meta = c.meta ?? "";
+      const source = restoreEscapes(c.value);
       const explicit = TERMINAL_LANGS.has(lang);
       const report = explicit
         ? /\breport\b/.test(meta)
-        : PLAIN_LANGS.has(lang) && hasReportBanner(c.value);
+        : PLAIN_LANGS.has(lang) && hasReportBanner(source);
       if (!explicit && !report) return;
 
       const inTab =
         parent.type === "containerDirective" &&
         TAB_NAMES.has((parent as ContainerDirective).name.toLowerCase());
       if (report && !inTab) {
-        const group: ReportGroup = { type: "reportGroup", sections: splitReport(c.value) };
+        const group: ReportGroup = { type: "reportGroup", sections: splitReport(source) };
         parent.children[index] = group as never;
       } else {
         parent.children[index] = htmlNode(

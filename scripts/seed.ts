@@ -2,7 +2,7 @@
  * 示例内容（可选）：npm run seed:demo
  * 生成几篇带封面的文章、分类、标签、关于页、说说与友链，方便本地预览效果。
  */
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import sharp from "sharp";
 
 import { MARKDOWN_GUIDE } from "../src/content/markdown-guide";
@@ -76,7 +76,8 @@ const now = Date.now();
 const daysAgo = (d: number) => new Date(now - d * 86_400_000);
 
 async function main() {
-  const existing = db.select({ n: count() }).from(schema.posts).get()?.n ?? 0;
+  const existing =
+    db.select({ n: count() }).from(schema.posts).where(eq(schema.posts.type, "post")).get()?.n ?? 0;
   if (existing > 0) {
     console.log("已存在文章，跳过示例数据。");
     return;
@@ -216,25 +217,6 @@ VACUUM INTO 'backup/blog.db';
     categoryId: life.id,
     tags: ["旅行", "随笔"],
     cover: await cover("kyoto"),
-  });
-
-  await savePost({
-    type: "page",
-    title: "关于",
-    slug: "about",
-    content: `你好，欢迎来到这里。
-
-这是一个记录技术与生活的地方。我相信好的工具应该安静地工作，好的文字应该耐得住重读。
-
-## 这个博客
-
-- 使用 Next.js、SQLite 与 Motion 构建
-- 配色取自中国传统色「宣纸」与「黛蓝」
-
-## 联系我
-
-可以在任意一篇文章下留言，也可以通过页脚的方式找到我。`,
-    status: "published",
   });
 
   for (const [i, content] of [

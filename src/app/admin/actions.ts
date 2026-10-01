@@ -60,7 +60,12 @@ export async function completeSetup(name: string) {
   return run(async () => {
     const trimmed = name.trim().slice(0, 40);
     if (trimmed) saveSettings({ authorName: trimmed });
-    const exists = db.select({ id: schema.posts.id }).from(schema.posts).limit(1).get();
+    const exists = db
+      .select({ id: schema.posts.id })
+      .from(schema.posts)
+      .where(eq(schema.posts.type, "post"))
+      .limit(1)
+      .get();
     if (!exists) {
       await savePost({
         title: "Markdown 语法指南",

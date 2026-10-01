@@ -10,13 +10,21 @@ const ESC = "\x1b";
 /** 文本里是否带 SGR 颜色代码 */
 export const hasAnsi = (text: string) => /\x1b\[[\d;:]*m/.test(text);
 
-const TEXT_ESC = /(?:\\e|\\033|\\x1[bB]|\\u001[bB]|\^\[)(?=\[[\d;]*m)/g;
+const TEXT_ESC = /(?:\\e|\\033|\\x1[bB]|\\u001[bB]|\^\[)(?=\[[\d;:]*m)/g;
 
-/** 转义字符被写成可见文字（\e[ 、\033[ 、^[[）时还原成真正的 ESC */
+/** Markdown 导出错误地转义了 ANSI 的左方括号。 */
+export const hasMarkdownEscapedAnsi = (text: string) =>
+  /(?:\x1b|\\e|\\033|\\x1[bB]|\\u001[bB]|\^\[)\\\[[\d;:]*m/.test(text);
+
+/** 还原文字形式的 ESC，以及富文本导出时误加的 Markdown 转义。 */
 export function restoreEscapes(text: string): string {
-  if (text.includes(ESC)) return text;
+  if (hasMarkdownEscapedAnsi(text)) {
+    text = text
+      .replace(/\\([\\`*_{}\[\]()#+.!>\-])/g, "$1")
+      .replace(/&#(?:x0*20|0*32);|&nbsp;/gi, " ");
+  }
   const count = text.match(TEXT_ESC)?.length ?? 0;
-  return count >= 2 ? text.replace(TEXT_ESC, ESC) : text;
+  return text.includes(ESC) || count >= 2 ? text.replace(TEXT_ESC, ESC) : text;
 }
 
 const hex = (r: number, g: number, b: number): Color =>

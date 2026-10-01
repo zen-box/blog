@@ -4,6 +4,7 @@
  *    `::: tab-item 标签`、`:::{tab-item} 标签` 统一改成 remark-directive 的 `:::name[标签]`
  * 2. 直接粘贴的测评报告纯文本（NodeQuality、xykt）包进代码块，避免被当成 Markdown 解析
  */
+import { hasMarkdownEscapedAnsi } from "./terminal/ansi";
 import { bannerAt, reportRegionEnd } from "./terminal/report";
 
 const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})(.*)$/;
@@ -33,6 +34,7 @@ const longestRun = (text: string, ch: string) =>
 
 export function preprocessMarkdown(source: string): string {
   const lines = source.split(/\r?\n/);
+  const importedReport = hasMarkdownEscapedAnsi(source);
   const out: string[] = [];
   let fence: { ch: string; len: number } | null = null;
 
@@ -67,7 +69,12 @@ export function preprocessMarkdown(source: string): string {
         continue;
       }
     }
-    out.push(line);
+    // 仅修复损坏报告中的独立图片 / 链接行，保留普通正文和代码里的刻意转义。
+    out.push(
+      importedReport
+        ? line.replace(/^( {0,3})(!?)\\\[([^\]]*?)\\?\]\((https?:\/\/\S+)\)[ \t]*$/, "$1$2[$3]($4)")
+        : line,
+    );
   }
   return out.join("\n");
 }
