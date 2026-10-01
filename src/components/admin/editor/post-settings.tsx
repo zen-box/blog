@@ -158,6 +158,7 @@ export function PostSettings({
   update,
   categories,
   allTags,
+  onGenerateInfo,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -165,6 +166,7 @@ export function PostSettings({
   update: (patch: Partial<EditorPost>) => void;
   categories: { id: number; name: string }[];
   allTags: string[];
+  onGenerateInfo: () => void;
 }) {
   const isPost = post.type === "post";
   const categoryItems = [
@@ -180,12 +182,23 @@ export function PostSettings({
           <SheetDescription>修改会在下次保存时生效。</SheetDescription>
         </SheetHeader>
         <div className="flex-1 space-y-6 overflow-y-auto px-4 py-5" data-lenis-prevent>
+          <button
+            type="button"
+            className="h-9 rounded-lg border border-border px-3 text-sm transition-colors hover:bg-muted"
+            onClick={() => {
+              onOpenChange(false);
+              onGenerateInfo();
+            }}
+          >
+            AI 生成文章信息
+          </button>
           <Field label="链接" hint="留空将根据标题自动生成拼音链接。">
             <div className="flex items-center rounded-lg border border-input focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
               <span className="pl-2.5 font-mono text-xs text-subtle">
                 {isPost ? "/posts/" : "/"}
               </span>
               <input
+                aria-label="链接"
                 value={post.slug}
                 onChange={(e) => update({ slug: e.target.value })}
                 placeholder="my-first-post"

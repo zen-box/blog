@@ -82,9 +82,12 @@ export async function completeSetup(name: string) {
 /* ------------------------------- 文章 ------------------------------- */
 
 /** 编辑器保存：不刷新当前页面，避免打断正在编辑的内容（前台页面都是实时渲染的） */
-export async function savePostAction(input: PostInput) {
+export async function savePostAction(
+  input: PostInput,
+  reason: "manual" | "auto" | "publish" = "manual",
+) {
   return run(async () => {
-    const post = await savePost(input);
+    const post = await savePost(input, reason);
     return {
       id: post.id,
       slug: post.slug,

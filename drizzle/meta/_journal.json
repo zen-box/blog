@@ -43,6 +43,13 @@
       "when": 1790792100000,
       "tag": "0005_default_about_page",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790792200000,
+      "tag": "0006_ai_history",
+      "breakpoints": true
     }
   ]
 }

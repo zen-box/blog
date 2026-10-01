@@ -301,6 +301,46 @@ export const settings = sqliteTable("settings", {
   updatedAt: updatedAt(),
 });
 
+/** AI 日用量：未知用量按调用次数记录，不推算 token。日期使用 UTC。 */
+export const aiUsage = sqliteTable("ai_usage", {
+  day: text("day").primaryKey(),
+  calls: integer("calls").notNull().default(0),
+  inputTokens: integer("input_tokens").notNull().default(0),
+  outputTokens: integer("output_tokens").notNull().default(0),
+  unknownUsage: integer("unknown_usage").notNull().default(0),
+});
+
+export type PostSnapshot = {
+  id?: number;
+  type: "post" | "page";
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string | null;
+  cover: string | null;
+  status: "draft" | "published";
+  publishedAt: string | null;
+  categoryId: number | null;
+  tags: string[];
+  pinned: boolean;
+  allowComments: boolean;
+  seoDescription: string | null;
+};
+
+export const postVersions = sqliteTable(
+  "post_versions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    postId: integer("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+    reason: text("reason", { enum: ["manual", "auto", "publish", "ai", "restore"] }).notNull(),
+    snapshot: text("snapshot", { mode: "json" }).$type<PostSnapshot>().notNull(),
+  },
+  (t) => [index("post_versions_post_created_idx").on(t.postId, t.createdAt, t.id)],
+);
+
 /* ------------------------------------------------------------------ */
 /* 访问统计                                                              */
 /* ------------------------------------------------------------------ */

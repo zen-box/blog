@@ -305,3 +305,47 @@ export async function testOutbound(config: OutboundConfig) {
     void dispatcher.close().catch(() => {});
   }
 }
+
+const aiHolder = globalThis as typeof globalThis & {
+  __blogAiOutbound?: { key: string; dispatcher: Dispatcher };
+};
+
+/** 仅供已认证管理员的 AI POST：允许私网模型，禁止跳转，代理失败不回退。 */
+export async function administratorAiPost(
+  target: string,
+  opts: {
+    administratorHeaders: Headers;
+    useProxy: boolean;
+    headers: Record<string, string>;
+    body: string;
+    signal: AbortSignal;
+  },
+) {
+  const { getAuth } = await import("@/lib/auth");
+  if (!(await getAuth().api.getSession({ headers: opts.administratorHeaders }))) {
+    throw new OutboundError("请先登录");
+  }
+  const url = new URL(target);
+  if (!/^https?:$/.test(url.protocol) || url.username || url.password || url.search || url.hash) {
+    throw new OutboundError("AI 服务地址格式不正确");
+  }
+  const proxy = opts.useProxy ? getSettings().outbound.proxy : "";
+  if (opts.useProxy && !proxy) throw new OutboundError("请先在出站设置中配置代理");
+  const key = opts.useProxy ? `proxy ${proxy}` : "direct";
+  let cached = aiHolder.__blogAiOutbound;
+  if (cached?.key !== key) {
+    const dispatcher = opts.useProxy
+      ? new ProxyAgent({ uri: parseProxy(proxy).href })
+      : new Agent({ connect: { timeout: 8000 } });
+    void cached?.dispatcher.close().catch(() => {});
+    cached = aiHolder.__blogAiOutbound = { key, dispatcher };
+  }
+  return fetch(url, {
+    method: "POST",
+    dispatcher: cached.dispatcher,
+    redirect: "manual",
+    signal: opts.signal,
+    headers: opts.headers,
+    body: opts.body,
+  });
+}

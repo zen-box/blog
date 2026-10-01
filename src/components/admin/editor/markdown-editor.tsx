@@ -23,6 +23,7 @@ import { tags as t } from "@lezer/highlight";
 import { useEffect, useRef } from "react";
 
 import { insertLink, wrap } from "./commands";
+import { richTextToMarkdown } from "@/lib/rich-text";
 
 const theme = EditorView.theme({
   "&": {
@@ -107,6 +108,7 @@ export type EditorCallbacks = {
   onChange: (value: string) => void;
   onUpload?: (files: File[], view: EditorView) => void;
   onScroll?: (ratio: number) => void;
+  onSelection?: (range: { from: number; to: number } | null) => void;
 };
 
 /** CodeMirror 6 的 Markdown 编辑器，外部滚动容器负责滚动 */
@@ -132,6 +134,7 @@ export function MarkdownEditor({
 
   useEffect(() => {
     if (!host.current) return;
+    let plainPaste = false;
     const editor = new EditorView({
       parent: host.current,
       state: EditorState.create({
@@ -162,11 +165,35 @@ export function MarkdownEditor({
             indentWithTab,
           ]),
           EditorView.updateListener.of((u) => {
+            if (u.selectionSet || u.docChanged) {
+              const range = u.state.selection.main;
+              cbs.current.onSelection?.(range.empty ? null : { from: range.from, to: range.to });
+            }
             if (u.docChanged) cbs.current.onChange(u.state.doc.toString());
           }),
           EditorView.domEventHandlers({
+            keydown(event) {
+              plainPaste =
+                (event.ctrlKey || event.metaKey) &&
+                event.shiftKey &&
+                event.key.toLowerCase() === "v";
+              return false;
+            },
             paste(event, v) {
               const files = Array.from(event.clipboardData?.files ?? []);
+              if (plainPaste) {
+                plainPaste = false;
+                return false;
+              }
+              if (!files.length && event.clipboardData?.getData("text/html")) {
+                const html = event.clipboardData.getData("text/html");
+                const converted = richTextToMarkdown(html);
+                if (converted) {
+                  event.preventDefault();
+                  v.dispatch(v.state.replaceSelection(converted), { userEvent: "input.paste" });
+                  return true;
+                }
+              }
               if (!files.length || !cbs.current.onUpload) return false;
               event.preventDefault();
               cbs.current.onUpload(files, v);

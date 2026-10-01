@@ -34,6 +34,8 @@ import { cleanImported } from "./import-cleanup";
 import { ImportNotice } from "./import-notice";
 import { MarkdownEditor } from "./markdown-editor";
 import { PostSettings } from "./post-settings";
+import { AiAssistant } from "./ai-assistant";
+import { PostHistory } from "./post-history";
 
 type Mode = "write" | "split" | "preview";
 type Preview = { html: string; wordCount: number; readingTime: number; pendingLinks?: number };
@@ -73,11 +75,21 @@ export function PostEditor({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewTick, setPreviewTick] = useState(0);
+  const [aiPreview, setAiPreview] = useState<string | null>(null);
+  const [selection, setSelection] = useState<{ from: number; to: number } | null>(null);
   const cardRetries = useRef({ content: "", count: 0 });
 
   const viewRef = useRef<EditorView | null>(null);
   const editorScroll = useRef<HTMLDivElement>(null);
   const previewScroll = useRef<HTMLDivElement>(null);
+  const previewMarkdown = aiPreview ?? post.content;
+  const showAiPreview = useCallback(
+    (markdown: string | null) => {
+      setAiPreview(markdown);
+      if (markdown !== null && wide) setMode("split");
+    },
+    [wide],
+  );
   const version = useRef(0);
   const inflight = useRef(false);
 
@@ -139,7 +151,7 @@ export function PostEditor({
           const res = await fetch("/api/admin/preview", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ markdown: post.content }),
+            body: JSON.stringify({ markdown: previewMarkdown }),
             signal: ctrl.signal,
           });
           if (!res.ok) return;
@@ -147,8 +159,8 @@ export function PostEditor({
           setPreview(data);
           // 链接卡片还没抓完：稍后重新预览，直到卡片出现
           const tries = cardRetries.current;
-          if (tries.content !== post.content)
-            Object.assign(tries, { content: post.content, count: 0 });
+          if (tries.content !== previewMarkdown)
+            Object.assign(tries, { content: previewMarkdown, count: 0 });
           if (data.pendingLinks && tries.count < CARD_RETRIES) {
             tries.count++;
             retry = setTimeout(() => setPreviewTick((n) => n + 1), 1500);
@@ -164,7 +176,7 @@ export function PostEditor({
       clearTimeout(retry);
       ctrl.abort();
     };
-  }, [post.content, mode, previewTick]);
+  }, [previewMarkdown, mode, previewTick]);
 
   const save = useCallback(
     async (status?: "draft" | "published", auto = false) => {
@@ -182,22 +194,29 @@ export function PostEditor({
       );
       let res: Awaited<ReturnType<typeof savePostAction>>;
       try {
-        res = await savePostAction({
-          id: post.id,
-          type: post.type,
-          title: post.title,
-          slug: post.slug,
-          content: post.content,
-          excerpt: post.excerpt,
-          cover: post.cover,
-          status: target,
-          publishedAt: post.publishedAt,
-          categoryId: post.categoryId,
-          tags: post.tags,
-          pinned: post.pinned,
-          allowComments: post.allowComments,
-          seoDescription: post.seoDescription,
-        });
+        res = await savePostAction(
+          {
+            id: post.id,
+            type: post.type,
+            title: post.title,
+            slug: post.slug,
+            content: post.content,
+            excerpt: post.excerpt,
+            cover: post.cover,
+            status: target,
+            publishedAt: post.publishedAt,
+            categoryId: post.categoryId,
+            tags: post.tags,
+            pinned: post.pinned,
+            allowComments: post.allowComments,
+            seoDescription: post.seoDescription,
+          },
+          auto
+            ? "auto"
+            : target === "published" && post.status !== "published"
+              ? "publish"
+              : "manual",
+        );
       } catch {
         res = { ok: false, error: "网络异常，保存失败（内容已备份在本地）" };
       } finally {
@@ -217,7 +236,7 @@ export function PostEditor({
       localStorage.removeItem(backupKey(post.type, id));
       if (wasNew) window.history.replaceState(null, "", `${listHref}/${id}`);
 
-      if (auto) return;
+      if (auto) return id;
       if (target === "published" && post.status !== "published") {
         const future = publishedAt && Date.parse(publishedAt) > Date.now();
         toast.success(future ? `已定时，将于 ${formatDateTime(publishedAt)} 发布` : "已发布", {
@@ -233,9 +252,41 @@ export function PostEditor({
       } else {
         toast.success("已保存");
       }
+      return id;
     },
     [post, listHref, isPost],
   );
+
+  async function saveSnapshot(reason: "ai" | "restore" = "ai") {
+    const id = post.id ?? (await save("draft"));
+    if (!id) throw new Error("请先填写标题并保存草稿，再应用全文建议");
+    const response = await fetch("/api/admin/history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        postId: id,
+        snapshot: {
+          id,
+          type: post.type,
+          title: post.title,
+          slug: post.slug,
+          content: post.content,
+          excerpt: post.excerpt,
+          cover: post.cover,
+          status: post.status,
+          publishedAt: post.publishedAt,
+          categoryId: post.categoryId,
+          tags: post.tags,
+          pinned: post.pinned,
+          allowComments: post.allowComments,
+          seoDescription: post.seoDescription,
+        },
+        reason,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "历史快照保存失败");
+  }
 
   // 草稿停顿几秒后自动保存到服务器；已发布的内容只做本地备份，避免把半成品发布出去
   useEffect(() => {
@@ -328,6 +379,12 @@ export function PostEditor({
         </span>
 
         <div className="ml-auto flex items-center gap-1.5">
+          <PostHistory
+            post={post}
+            snapshot={() => saveSnapshot("restore")}
+            update={update}
+            viewRef={viewRef}
+          />
           <div className="hidden rounded-lg border border-border p-0.5 md:flex">
             {modes.map((m) => (
               <button
@@ -442,12 +499,13 @@ export function PostEditor({
 
       {/* 编辑区 + 预览区 */}
       <div className={cn("grid min-h-0 flex-1", mode === "split" ? "grid-cols-2" : "grid-cols-1")}>
-        {mode !== "preview" && (
+        {
           <div
             ref={editorScroll}
             className={cn(
               "min-h-0 overflow-y-auto",
               mode === "split" && "border-r border-border/70",
+              mode === "preview" && "hidden",
             )}
             data-lenis-prevent
           >
@@ -491,17 +549,27 @@ export function PostEditor({
                   toast.success("已整理导入的内容", { description: "不满意可以按 Ctrl+Z 撤销" });
                 }}
               />
+              <AiAssistant
+                post={post}
+                viewRef={viewRef}
+                selection={selection}
+                categories={categories}
+                update={update}
+                onPreview={showAiPreview}
+                snapshot={saveSnapshot}
+              />
               <MarkdownEditor
                 value={post.content}
                 onChange={(content) => update({ content })}
                 onUpload={(files, v) => void onUpload(files, v)}
+                onSelection={setSelection}
                 onScroll={mode === "split" ? syncPreview : undefined}
                 viewRef={viewRef}
                 scrollParent={editorScroll}
               />
             </div>
           </div>
-        )}
+        }
 
         {mode !== "write" && (
           <div
@@ -510,6 +578,11 @@ export function PostEditor({
             data-lenis-prevent
           >
             <div className="mx-auto max-w-[42rem] px-6 pt-10 pb-[40vh]">
+              {aiPreview !== null && (
+                <p className="mb-4 text-sm text-brand" role="status">
+                  AI 建议预览 · 正文尚未应用
+                </p>
+              )}
               <h1 className="mb-8 font-serif text-[2rem] leading-snug font-bold text-foreground">
                 {post.title || <span className="text-subtle">无标题</span>}
               </h1>
@@ -537,6 +610,7 @@ export function PostEditor({
         update={update}
         categories={categories}
         allTags={allTags}
+        onGenerateInfo={() => window.dispatchEvent(new Event("blog-ai-metadata"))}
       />
     </div>
   );

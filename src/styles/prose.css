@@ -1668,3 +1668,18 @@
   --markmap-code-color: var(--foreground);
   --markmap-highlight-bg: color-mix(in oklab, var(--ochre) 30%, transparent);
 }
+
+/* 编辑器 AI 建议沿用品牌色；改写结果只是装饰层，接受前不修改正文。 */
+.ai-original-removed {
+  text-decoration: line-through;
+  background: color-mix(in oklab, var(--destructive) 10%, transparent);
+}
+.ai-inline-suggestion {
+  color: var(--foreground);
+  white-space: pre-wrap;
+}
+.ai-inline-suggestion ins {
+  text-decoration: none;
+  background: var(--brand-soft);
+  border-radius: 0.2em;
+}

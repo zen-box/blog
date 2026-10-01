@@ -9,6 +9,7 @@ import { RENDER_VERSION, renderMarkdown } from "@/lib/markdown";
 import { normalizeSlug, slugify } from "@/lib/slug";
 
 import { findMediaByUrl } from "./media";
+import { recordPostVersion, sameSnapshot, snapshotForPost, type SaveReason } from "./post-history";
 
 const { posts, tags, postTags, categories } = schema;
 
@@ -98,7 +99,8 @@ export function pruneUnusedTags() {
     .run();
 }
 
-export async function savePost(raw: PostInput): Promise<Post> {
+export async function savePost(raw: PostInput, reason: SaveReason = "manual"): Promise<Post> {
+  reason = z.enum(["manual", "auto", "publish"]).parse(reason);
   const input = postInputSchema.parse(raw);
   const existing = input.id
     ? db.select().from(posts).where(eq(posts.id, input.id)).get()
@@ -144,14 +146,18 @@ export async function savePost(raw: PostInput): Promise<Post> {
     seoDescription: input.seoDescription?.trim() || null,
   };
 
-  const tagIds = input.type === "post" ? ensureTags(input.tags) : [];
-
   const saved = db.transaction((tx) => {
-    const row = existing
+    const current = input.id
+      ? tx.select().from(posts).where(eq(posts.id, input.id)).get()
+      : undefined;
+    if (input.id && !current) throw new Error("文章不存在");
+    const before = current ? snapshotForPost(current, tx) : undefined;
+    const tagIds = input.type === "post" ? ensureTags(input.tags) : [];
+    const row = current
       ? tx
           .update(posts)
           .set({ ...values, updatedAt: new Date() })
-          .where(eq(posts.id, existing.id))
+          .where(eq(posts.id, current.id))
           .returning()
           .get()
       : tx.insert(posts).values(values).returning().get();
@@ -160,6 +166,20 @@ export async function savePost(raw: PostInput): Promise<Post> {
       tx.insert(postTags)
         .values(tagIds.map((tagId) => ({ postId: row.id, tagId })))
         .run();
+    }
+    const after = snapshotForPost(row, tx);
+    if (!before || !sameSnapshot(before, after)) {
+      const effectiveReason =
+        row.status === "published" && current?.status !== "published" ? "publish" : reason;
+      // 保存前后的正文、标签及全部可编辑元数据在同一事务内留存。
+      if (before)
+        recordPostVersion(
+          tx,
+          row.id,
+          before,
+          effectiveReason === "auto" ? "manual" : effectiveReason,
+        );
+      recordPostVersion(tx, row.id, after, effectiveReason, { merge: effectiveReason === "auto" });
     }
     return row;
   });

@@ -1,0 +1,150 @@
+{
+  "phase": 1,
+  "date": "2026-10-01",
+  "database": "session scratch databases only",
+  "providers": "local OpenAI and Anthropic SSE mocks",
+  "realProviderRequests": 0,
+  "build": {
+    "command": "next build --webpack && node scripts/postbuild.mjs",
+    "passed": true,
+    "staticPages": 15,
+    "stderrEmpty": true
+  },
+  "staticChecks": {
+    "typescriptNoEmit": "passed",
+    "eslintSrcAndAiTextScript": "passed",
+    "prettierChangedText": "passed",
+    "gitDiffCheck": "passed",
+    "aiTextRegression": "passed",
+    "diagramRegression": "passed",
+    "importCleanupRegression": "passed",
+    "original386LineReportRegression": "passed"
+  },
+  "backend": {
+    "passedGroups": 16,
+    "groups": [
+      "migration preserves existing articles, tags and settings",
+      "signed session, same-origin and bounded JSON guards",
+      "config excludes key, blank preserves key, partial fields preserve values",
+      "OpenAI arbitrary UTF-8/SSE chunks, thinking and secret filtering, usage",
+      "unknown usage, fast model, Markdown guide, Anthropic thinking and usage",
+      "metadata taxonomy and validation",
+      "connection, 401/402/429, sanitized failures, malformed/truncated streams, redirects",
+      "header/stream timeout, stream cancellation and request abort",
+      "Anthropic connection, Chinese 401/402/429, header/stream timeout, cancellation and abort",
+      "broken proxy never falls back, ordinary outbound SSRF unchanged",
+      "pre-state and editable metadata snapshots, auto merge, manual and publish",
+      "AI/restore snapshots do not publish, newest 50, auto window boundaries",
+      "article, tags and snapshots roll back atomically",
+      "usage max 30 records, clear key and unconfigured requests",
+      "local service without key omits authentication header",
+      "CR/LF/CRLF, multiline SSE, every-byte Chinese and think boundaries"
+    ]
+  },
+  "browser": {
+    "finishedAt": "2026-10-01T06:47:08.771Z",
+    "variants": [
+      {
+        "variant": "desktop-light",
+        "viewport": [1440, 1000],
+        "settingsAxe": [],
+        "editorAxe": [],
+        "historyAxe": [],
+        "pageErrors": [],
+        "scrollWidth": 1440
+      },
+      {
+        "variant": "desktop-dark",
+        "viewport": [1440, 1000],
+        "settingsAxe": [],
+        "editorAxe": [],
+        "historyAxe": [],
+        "pageErrors": [],
+        "scrollWidth": 1440
+      },
+      {
+        "variant": "mobile-light",
+        "viewport": [390, 844],
+        "settingsAxe": [],
+        "editorAxe": [],
+        "historyAxe": [],
+        "pageErrors": [],
+        "scrollWidth": 390
+      },
+      {
+        "variant": "mobile-dark",
+        "viewport": [390, 844],
+        "settingsAxe": [],
+        "editorAxe": [],
+        "historyAxe": [],
+        "pageErrors": [],
+        "scrollWidth": 390
+      }
+    ],
+    "checks": [
+      "anonymous-ai-history-denied",
+      "visitors-no-ai",
+      "eight-presets-and-mimo-defaults",
+      "seven-rewrites-custom-meta-shortcut-focus",
+      "inline-strikethrough-and-word-replacement",
+      "duplicate-corrupt-placeholders-refused",
+      "format-apply-one-undo",
+      "rewrite-context",
+      "whole-per-section-ignore",
+      "whole-protected-exact-and-undo",
+      "bad-placeholders-refused",
+      "format-warning-preview-only",
+      "upstream-cancel",
+      "rich-paste-no-ai",
+      "shift-plain-paste",
+      "image-paste-upload",
+      "invalid-metadata-refused",
+      "anthropic-browser-stream",
+      "manual-save-publish-draft-regression"
+    ],
+    "perVariantAssertions": [
+      "streaming source unchanged, Tab acceptance, one undo, regeneration and Escape discard",
+      "metadata does not overwrite before confirmation, checkboxes control application",
+      "all five metadata values verified in saved snapshot",
+      "history diff keyboard focus and focus trap",
+      "restoration is draft and prior unsaved content has restore snapshot",
+      "AI pre-change content has snapshot",
+      "no runtime errors or page horizontal overflow"
+    ],
+    "mock": { "calls": 38, "cancelled": 1 },
+    "persistedUsageAcrossAllAuditRuns": {
+      "day": "2026-10-01",
+      "calls": 235,
+      "inputTokens": 2712,
+      "outputTokens": 1808,
+      "unknownUsage": 9
+    },
+    "errors": []
+  },
+  "productionSupplement": {
+    "finishedAt": "2026-10-01T06:42:25.692Z",
+    "checks": [
+      "html-rsc-client-script-secret-exclusion",
+      "all-static-client-files-secret-exclusion"
+    ],
+    "diagramVariants": ["desktop", "mobile"],
+    "perVariantChecks": [
+      "seven-enlarge-controls",
+      "chart-scale",
+      "focus-trap",
+      "scroll-lock-restore",
+      "focus-return",
+      "table-toggle",
+      "error-line",
+      "markmap-scale"
+    ],
+    "errors": []
+  },
+  "screenshots": 19,
+  "limitations": [
+    "no real provider or paid requests",
+    "Chromium touch emulation, no physical iOS device",
+    "no Docker build, push, tag or deployment",
+    "local Turbopack junction permission issue; approved Webpack checks passed"
+  ]
+}

@@ -34,6 +34,7 @@ import { LinkCardSettings } from "./link-card-settings";
 import { type AccountInfo, SecuritySettings } from "./security-settings";
 import { Row, Section } from "./settings-ui";
 import { StorageSettings } from "./storage-settings";
+import { AiSettings } from "./ai-settings";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -50,6 +51,7 @@ const SECTIONS = [
   { id: "footer", label: "页脚与备案" },
   { id: "storage", label: "存储" },
   { id: "linkcards", label: "链接卡片" },
+  { id: "ai", label: "AI 写作助手" },
   { id: "advanced", label: "高级" },
   { id: "account", label: "账号与安全" },
   { id: "devices", label: "登录设备" },
@@ -165,6 +167,7 @@ export function SettingsForm({
       </nav>
 
       <div className="space-y-5 pb-24">
+        <AiSettings />
         <Section id="site" title="站点">
           <Row label="站点名称">
             <Input value={s.siteTitle} onChange={(e) => set("siteTitle", e.target.value)} />
