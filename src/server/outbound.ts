@@ -325,6 +325,14 @@ export async function administratorAiPost(
   if (!(await getAuth().api.getSession({ headers: opts.administratorHeaders }))) {
     throw new OutboundError("请先登录");
   }
+  return trustedBackgroundAiPost(target, opts);
+}
+
+/** Server-only: jobs authorized by admin actions or explicit auto settings, never request URLs. */
+export async function trustedBackgroundAiPost(
+  target: string,
+  opts: { useProxy: boolean; headers: Record<string, string>; body: string; signal: AbortSignal },
+) {
   const url = new URL(target);
   if (!/^https?:$/.test(url.protocol) || url.username || url.password || url.search || url.hash) {
     throw new OutboundError("AI 服务地址格式不正确");

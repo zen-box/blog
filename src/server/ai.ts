@@ -8,7 +8,7 @@ import { MARKDOWN_GUIDE } from "@/content/markdown-guide";
 import { db, schema } from "@/db";
 import { beginAiUsage, completeAiUsage, getAiConfig, type AiStoredConfig } from "./ai-config";
 import { readSse, SecretFilter, ThinkFilter } from "./ai-stream";
-import { administratorAiPost, isPrivateAddress } from "./outbound";
+import { administratorAiPost, trustedBackgroundAiPost, isPrivateAddress } from "./outbound";
 
 export const aiRunSchema = z
   .object({
@@ -140,7 +140,7 @@ function token(value: unknown): number | undefined {
 async function* providerText(
   config: AiStoredConfig,
   request: ReturnType<typeof requestFor>,
-  headers: Headers,
+  headers: Headers | null,
   signal: AbortSignal,
 ): AsyncGenerator<string> {
   const day = beginAiUsage();
@@ -150,13 +150,15 @@ async function* providerText(
   let outputSize = 0;
   try {
     if (signal.aborted) throw signal.reason;
-    const response = await administratorAiPost(request.url, {
-      administratorHeaders: headers,
+    const options = {
       useProxy: config.useProxy,
       headers: request.headers,
       body: request.body,
       signal,
-    });
+    };
+    const response = headers
+      ? await administratorAiPost(request.url, { ...options, administratorHeaders: headers })
+      : await trustedBackgroundAiPost(request.url, options);
     if (!response.ok || !response.body) {
       await response.body?.cancel().catch(() => {});
       throw statusError(response.status);
@@ -339,6 +341,37 @@ export async function testAi(request: Request) {
     text += think.push("", true);
     if (!text.trim()) throw new AiError("AI 连接成功但未返回正文，请检查模型");
     return { ok: true as const };
+  } catch (error) {
+    throw describeAiError(error, signal);
+  }
+}
+
+/** Trusted persistent worker call. Uses the main model, the same filters and usage accounting. */
+export async function generateBackgroundAiText(
+  system: string,
+  user: string,
+  jobSignal?: AbortSignal,
+) {
+  const config = getAiConfig();
+  requireAiKey(config);
+  const signal = AbortSignal.any([
+    ...(jobSignal ? [jobSignal] : []),
+    AbortSignal.timeout(config.timeoutMs),
+  ]);
+  const think = new ThinkFilter();
+  const secret = new SecretFilter(config.apiKey);
+  let text = "";
+  try {
+    for await (const delta of providerText(
+      config,
+      requestFor(config, config.model, system, user, 1024),
+      null,
+      signal,
+    ))
+      text += secret.push(think.push(delta));
+    text += secret.push(think.push("", true), true);
+    if (!text.trim()) throw new AiError("AI 未返回正文，请检查模型或重试");
+    return text.trim();
   } catch (error) {
     throw describeAiError(error, signal);
   }

@@ -35,6 +35,7 @@ import { ImportNotice } from "./import-notice";
 import { MarkdownEditor } from "./markdown-editor";
 import { PostSettings } from "./post-settings";
 import { AiAssistant } from "./ai-assistant";
+import { ReaderAiPanel } from "./reader-ai-panel";
 import { PostHistory } from "./post-history";
 
 type Mode = "write" | "split" | "preview";
@@ -558,6 +559,7 @@ export function PostEditor({
                 onPreview={showAiPreview}
                 snapshot={saveSnapshot}
               />
+              {isPost && <ReaderAiPanel postId={post.id} dirty={dirty} />}
               <MarkdownEditor
                 value={post.content}
                 onChange={(content) => update({ content })}

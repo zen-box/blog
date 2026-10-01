@@ -146,6 +146,12 @@ export async function savePost(raw: PostInput, reason: SaveReason = "manual"): P
     seoDescription: input.seoDescription?.trim() || null,
   };
 
+  const shouldEnqueue =
+    input.type === "post" &&
+    input.status === "published" &&
+    (existing?.status !== "published" || existing.content !== input.content);
+  const enqueue = shouldEnqueue ? (await import("./reader-ai")).enqueueAutoSummary : undefined;
+
   const saved = db.transaction((tx) => {
     const current = input.id
       ? tx.select().from(posts).where(eq(posts.id, input.id)).get()
@@ -181,6 +187,8 @@ export async function savePost(raw: PostInput, reason: SaveReason = "manual"): P
         );
       recordPostVersion(tx, row.id, after, effectiveReason, { merge: effectiveReason === "auto" });
     }
+    // Article and authorized background work commit together, including save failures.
+    enqueue?.(row);
     return row;
   });
 

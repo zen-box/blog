@@ -11,6 +11,7 @@
     "check:diagrams": "node --conditions=react-server --import tsx scripts/check-diagrams.ts",
     "check:ai-text": "node --import tsx scripts/check-ai-text.ts",
     "check:music": "node --import tsx scripts/check-music.ts",
+    "check:reader-ai": "node --conditions=react-server --import tsx scripts/check-reader-ai.ts",
     "format": "prettier --write .",
     "db:generate": "drizzle-kit generate",
     "seed:demo": "node --conditions=react-server --import tsx scripts/seed.ts",

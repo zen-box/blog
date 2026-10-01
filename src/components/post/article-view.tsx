@@ -6,6 +6,8 @@ import { getCommentTree } from "@/server/comments";
 import { withLinkCards } from "@/server/link-preview";
 import type { AdjacentPost, PostDetail } from "@/server/posts";
 import { resolveUploadUrl } from "@/server/storage";
+import { getPublishedReaderInsights } from "@/server/reader-ai";
+import { ReaderInsightsCard } from "./reader-insights";
 
 import { Comments } from "./comments";
 import { PostContent } from "./post-content";
@@ -51,6 +53,12 @@ export function ArticleView({
         <div className="mx-auto mt-12 grid w-full max-w-[82rem] grid-cols-1 px-5 sm:mt-14 md:px-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)] xl:gap-14">
           <div aria-hidden className="hidden xl:block" />
           <div className="mx-auto w-full max-w-[42rem] min-w-0">
+            {!isPage && (
+              <ReaderInsightsCard
+                key={post.content}
+                insights={getPublishedReaderInsights(post.id, post.content)}
+              />
+            )}
             <PostContent html={withLinkCards(post.html)} />
           </div>
           <aside className="hidden xl:block">

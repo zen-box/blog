@@ -36,6 +36,7 @@ import { Row, Section } from "./settings-ui";
 import { StorageSettings } from "./storage-settings";
 import { AiSettings } from "./ai-settings";
 import { MusicSettings } from "./music-settings";
+import { ReaderAiSettings } from "./reader-ai-settings";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -54,6 +55,7 @@ const SECTIONS = [
   { id: "linkcards", label: "链接卡片" },
   { id: "ai", label: "AI 写作助手" },
   { id: "music", label: "轻音乐播放器" },
+  { id: "reader-ai", label: "读者 AI 内容" },
   { id: "advanced", label: "高级" },
   { id: "account", label: "账号与安全" },
   { id: "devices", label: "登录设备" },
@@ -170,6 +172,7 @@ export function SettingsForm({
 
       <div className="space-y-5 pb-24">
         <AiSettings />
+        <ReaderAiSettings />
         <MusicSettings />
         <Section id="site" title="站点">
           <Row label="站点名称">

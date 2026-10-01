@@ -57,6 +57,13 @@
       "when": 1790792300000,
       "tag": "0007_music",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790792400000,
+      "tag": "0008_reader_ai",
+      "breakpoints": true
     }
   ]
 }

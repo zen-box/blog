@@ -1,0 +1,82 @@
+{
+  "phase": 3,
+  "date": "2026-10-01",
+  "outcome": "passed",
+  "homeDev": {
+    "runtime": "Next.js 16.3.7 dev / Turbopack",
+    "checks": ["first hydration", "soft navigation return", "reload after navigation"],
+    "errors": []
+  },
+  "coreBrowser": {
+    "passed": 13,
+    "evidenceRun": "2026-10-01T10:34:44.445Z",
+    "checks": [
+      "anonymous-401-cross-origin-403",
+      "defaults-auto-off-visitors-no-ai",
+      "production-worker-manual-generation-polling",
+      "manual-edit-survives-polling-save-regenerate",
+      "benchmark-not-saved-before-author-confirmation",
+      "dialog-focus-restoration",
+      "generation-does-not-publish-draft",
+      "publish-auto-summary-metadata-no-extra-call",
+      "dirty-panel-blocked-content-update-auto-summary",
+      "jobs-ui-cancel-running-and-retry",
+      "automatic-delay-max-three-failed-manual-retry",
+      "actual-process-restart-running-lease-recovery",
+      "production-anthropic-main-model-and-openai"
+    ],
+    "restart": { "actualProcessRestart": true, "sameDatabase": true, "recoveredAttempts": 2 },
+    "rerunAfterButtonStyleFix": false
+  },
+  "uiBrowser": {
+    "passedVariants": 4,
+    "variants": ["desktop-light", "desktop-dark", "mobile-light", "mobile-dark"],
+    "viewports": { "desktop": [1440, 1000], "mobile": [390, 844] },
+    "axeScans": 16,
+    "axeViolations": 0,
+    "pageErrors": 0,
+    "hydrationErrors": 0,
+    "horizontalOverflow": 0,
+    "additionalChecks": [
+      "settings-ui-save-and-summary-display-toggle",
+      "reduced-motion-full-summary"
+    ],
+    "visitorAiCallsDuringUiRun": 0,
+    "screenshots": 16,
+    "finalUiRerun": "after confirmation button contrast fix"
+  },
+  "originalReport": {
+    "items": 44,
+    "groups": { "hardware": 4, "performance": 10, "ip": 28, "media": 2 },
+    "mediaSourceLines": [
+      [181, 183, 185, 187],
+      [279, 281, 283, 285]
+    ],
+    "network": "images only; no metrics inferred; textual network fixtures separately passed"
+  },
+  "regressions": {
+    "readerAi": "passed; includes durable queue, leases, atomic save/history/enqueue rollback, retry dedupe, revision/hash fences, dual protocols, source confirmation, escaped ANSI and table rows",
+    "aiBackendGroups": 16,
+    "aiText": "passed",
+    "music": "passed",
+    "diagrams": "passed",
+    "drizzleSchemaExport": "passed; reader tables and existing music/posts/history included",
+    "typescript": "passed",
+    "eslint": "passed",
+    "prettier": "passed",
+    "gitDiffCheck": "passed"
+  },
+  "build": {
+    "next": "16.3.7",
+    "bundler": "webpack",
+    "staticPages": 19,
+    "postbuild": "passed",
+    "standalone": true
+  },
+  "limits": [
+    "local mock AI providers",
+    "Chromium desktop and touch emulation",
+    "no Docker build or deployment"
+  ],
+  "published": false
+}

@@ -1,0 +1,5 @@
+@media (prefers-reduced-motion: reduce) {
+  .ai-summary-reveal [data-summary-remaining] {
+    opacity: 1;
+  }
+}

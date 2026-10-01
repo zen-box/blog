@@ -11,6 +11,7 @@ import {
   LogOutIcon,
   MessageCircleIcon,
   Music2Icon,
+  ListTodoIcon,
   PanelsTopLeftIcon,
   PenLineIcon,
   SettingsIcon,
@@ -89,6 +90,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
     items: [
       { title: "媒体库", href: "/admin/media", icon: ImageIcon },
       { title: "音乐", href: "/admin/music", icon: Music2Icon },
+      { title: "后台任务", href: "/admin/jobs", icon: ListTodoIcon },
       { title: "设置", href: "/admin/settings", icon: SettingsIcon },
     ],
   },
@@ -107,6 +109,7 @@ const TITLES: [RegExp, string][] = [
   [/^\/admin\/links/, "友链"],
   [/^\/admin\/media/, "媒体库"],
   [/^\/admin\/music/, "音乐"],
+  [/^\/admin\/jobs/, "后台任务"],
   [/^\/admin\/settings/, "设置"],
   [/^\/admin$/, "仪表盘"],
 ];
