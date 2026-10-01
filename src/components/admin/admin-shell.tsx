@@ -10,6 +10,7 @@ import {
   LinkIcon,
   LogOutIcon,
   MessageCircleIcon,
+  Music2Icon,
   PanelsTopLeftIcon,
   PenLineIcon,
   SettingsIcon,
@@ -87,6 +88,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
     label: "系统",
     items: [
       { title: "媒体库", href: "/admin/media", icon: ImageIcon },
+      { title: "音乐", href: "/admin/music", icon: Music2Icon },
       { title: "设置", href: "/admin/settings", icon: SettingsIcon },
     ],
   },
@@ -104,6 +106,7 @@ const TITLES: [RegExp, string][] = [
   [/^\/admin\/comments/, "评论"],
   [/^\/admin\/links/, "友链"],
   [/^\/admin\/media/, "媒体库"],
+  [/^\/admin\/music/, "音乐"],
   [/^\/admin\/settings/, "设置"],
   [/^\/admin$/, "仪表盘"],
 ];

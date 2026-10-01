@@ -409,3 +409,5 @@ export type Comment = typeof comments.$inferSelect;
 export type Link = typeof links.$inferSelect;
 export type Moment = typeof moments.$inferSelect;
 export type Media = typeof media.$inferSelect;
+
+export { musicTracks } from "./music-schema";

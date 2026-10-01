@@ -1,9 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 
 let navigated = false;
+const listeners = new Set<() => void>();
 
 /**
  * 站内导航时由 <ViewTransition> 负责转场；只有首次加载页面时
@@ -18,12 +19,19 @@ export function NavigationTracker() {
       return;
     }
     navigated = true;
+    listeners.forEach((listener) => listener());
   }, [pathname]);
   return null;
 }
 
 /** 组件挂载时是否已经发生过站内导航 */
 export function useArrivedByNavigation(): boolean {
-  const [value] = useState(() => navigated);
-  return value;
+  return useSyncExternalStore(
+    (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    () => navigated,
+    () => false,
+  );
 }

@@ -246,6 +246,8 @@ function setupMisc(root: HTMLElement) {
   }
 }
 
+import { setupArticleAudio } from "@/components/music/article-audio";
+
 /** 文章正文：服务端预渲染的 HTML + 浏览器端的交互增强 */
 export function PostContent({
   html,
@@ -271,6 +273,7 @@ export function PostContent({
     const cleanupTabs = setupTabs(root);
     const cleanupTerminals = setupTerminals(root);
     setupMisc(root);
+    const cleanupAudio = preview ? () => {} : setupArticleAudio(root);
 
     const images = () => Array.from(root.querySelectorAll<HTMLImageElement>("img.zoomable"));
     const onClick = (e: MouseEvent) => {
@@ -285,9 +288,10 @@ export function PostContent({
       cleanupCode();
       cleanupTabs();
       cleanupTerminals();
+      cleanupAudio();
       root.removeEventListener("click", onClick);
     };
-  }, [html, openZoom]);
+  }, [html, openZoom, preview]);
 
   // 图表的配色跟随明暗主题，切换后重新渲染
   useEffect(() => {
