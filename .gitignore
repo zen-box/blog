@@ -48,3 +48,8 @@ next-env.d.ts
 # 个人文件：旧文章备份、本机开发工具配置
 /备份/
 /.claude/
+/.pi/
+
+# 验收截图只留在本地，不放进仓库
+/docs/**/screenshots/
+/docs/**/screenshots.html

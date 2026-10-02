@@ -2,7 +2,7 @@
 
 2026-10-01。本次完成阶段 0 的细节检查、图表兼容和导入整理。沿用现有组件、暖色配色、阅读宽度和动画；没有开始阶段 1 及后续功能。
 
-[页面截图索引](screenshots.html)提供 25 种页面的桌面／手机、亮色／暗色对照。截图来自临时演示数据，不包含真实博客数据。
+验收时截取了 25 种页面的桌面／手机、亮色／暗色对照，截图来自临时演示数据。截图只留在本地，没有放进仓库。
 
 ## 环境与覆盖范围
 
@@ -68,16 +68,16 @@
 
 ## 状态与交互截图
 
-- [加载提示](screenshots/desktop-loading.png)
-- [首页空状态](screenshots/desktop-empty-home.png)、[媒体库空状态](screenshots/desktop-empty-media.png)
-- [前台错误](screenshots/desktop-error-home.png)、[后台错误](screenshots/desktop-error-admin.png)
-- [桌面拖动](screenshots/desktop-pan.png)、[手机双指缩放](screenshots/mobile-pinch.png)
-- [桌面主题切换后的图表](screenshots/desktop-diagram-dark.png)、[手机暗色图表](screenshots/mobile-diagram-dark.png)
-- [桌面图表全屏](screenshots/desktop-chart-fullscreen.png)、[手机图表全屏](screenshots/mobile-chart-fullscreen.png)
-- [桌面错误行高亮](screenshots/desktop-diagram-errors.png)、[手机错误行高亮](screenshots/mobile-diagram-errors.png)
-- [桌面思维导图全屏](screenshots/desktop-markmap-fullscreen.png)、[手机思维导图全屏](screenshots/mobile-markmap-fullscreen.png)
+- 加载提示
+- 首页空状态、媒体库空状态
+- 前台错误、后台错误
+- 桌面拖动、手机双指缩放
+- 桌面主题切换后的图表、手机暗色图表
+- 桌面图表全屏、手机图表全屏
+- 桌面错误行高亮、手机错误行高亮
+- 桌面思维导图全屏、手机思维导图全屏
 
-本次共保存 115 张截图，其中 100 张为页面视口／主题组合，其余为状态和图表交互截图。
+本次共截取 115 张截图，其中 100 张为页面视口／主题组合，其余为状态和图表交互截图；都没有放进仓库。
 
 ## 保留事项
 
