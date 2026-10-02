@@ -1,24 +1,28 @@
 # syntax=docker/dockerfile:1
 
-# ---------- 依赖 ----------
-FROM node:24-bookworm-slim AS deps
+# ---------- 基础：Node.js + pnpm ----------
+FROM node:24-bookworm-slim AS base
 WORKDIR /app
-# better-sqlite3 等原生模块需要 node-gyp 编译；slim 镜像不包含编译工具
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 make g++ \
-    && rm -rf /var/lib/apt/lists/*
 # 国内服务器可以用镜像源加速：docker compose build --build-arg NPM_REGISTRY=https://registry.npmmirror.com
 ARG NPM_REGISTRY=https://registry.npmjs.org
-COPY package.json package-lock.json ./
-RUN npm config set registry "$NPM_REGISTRY" && npm ci --no-audit --no-fund
+COPY package.json ./
+# pnpm 的版本以 package.json 的 packageManager 字段为准
+RUN npm config set registry "$NPM_REGISTRY" \
+    && npm install -g "$(node -p "require('./package.json').packageManager.split('+')[0]")" --no-audit --no-fund \
+    && pnpm config set registry "$NPM_REGISTRY"
+
+# ---------- 依赖 ----------
+# better-sqlite3、sharp 都用自带的预编译文件，不需要编译工具
+FROM base AS deps
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # ---------- 构建 ----------
-FROM node:24-bookworm-slim AS builder
-WORKDIR /app
+FROM base AS builder
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # ---------- 运行 ----------
 FROM node:24-bookworm-slim AS runner

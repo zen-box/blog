@@ -23,11 +23,11 @@
 
 ## 本地开发
 
-需要 Node.js 24。
+需要 Node.js 24 和 pnpm（`corepack enable pnpm` 或 `npm install -g pnpm`；版本以 `package.json` 的 `packageManager` 为准）。
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 打开 <http://localhost:3000>，后台在 <http://localhost:3000/admin>。首次进入后台会要求创建管理员账号（只能创建一个），需要填写终端里打印的设置令牌；创建后会放入一篇《Markdown 语法指南》草稿，打开它就能在编辑器里对照所有语法的实时效果。
@@ -35,7 +35,7 @@ npm run dev
 想先看看效果，可以生成示例内容（仅在数据库为空时生效）：
 
 ```bash
-npm run seed:demo
+pnpm seed:demo
 ```
 
 ## 部署
@@ -108,9 +108,9 @@ server {
 ### 方式三：不用 Docker
 
 ```bash
-npm ci
-npm run build
-SITE_URL=https://blog.example.com npm start
+pnpm install --frozen-lockfile
+pnpm build
+SITE_URL=https://blog.example.com pnpm start
 ```
 
 建议用 PM2 或 systemd 守护进程。数据保存在项目的 `data/` 目录。
@@ -152,14 +152,14 @@ git push origin v0.1.0
 
   ```bash
   docker compose exec blog node reset-admin.mjs   # Docker
-  npm run reset-admin                              # 非 Docker
+  pnpm reset-admin                                 # 非 Docker
   ```
 
 - **丢了两步验证的手机，备用码也用完了**：加上 `--2fa` 只关闭两步验证，账号和密码不变
 
   ```bash
   docker compose exec blog node reset-admin.mjs --2fa   # Docker
-  npm run reset-admin -- --2fa                           # 非 Docker
+  pnpm reset-admin --2fa                                 # 非 Docker
   ```
 
 ## 账号安全
@@ -253,12 +253,12 @@ drizzle/                 数据库迁移
 
 ## 常用命令
 
-| 命令                                 | 说明                                        |
-| ------------------------------------ | ------------------------------------------- |
-| `npm run dev`                        | 开发模式                                    |
-| `npm run build` / `npm start`        | 构建 / 运行生产版本                         |
-| `npm run lint` / `npm run typecheck` | 代码检查 / 类型检查                         |
-| `npm run format`                     | 格式化代码                                  |
-| `npm run db:generate`                | 修改 `src/db/schema.ts` 后生成迁移文件      |
-| `npm run seed:demo`                  | 生成示例内容                                |
-| `npm run reset-admin`                | 重置管理员账号（`-- --2fa` 只关闭两步验证） |
+| 命令                           | 说明                                     |
+| ------------------------------ | ---------------------------------------- |
+| `pnpm dev`                     | 开发模式                                 |
+| `pnpm build` / `pnpm start`    | 构建 / 运行生产版本                      |
+| `pnpm lint` / `pnpm typecheck` | 代码检查 / 类型检查                      |
+| `pnpm format`                  | 格式化代码                               |
+| `pnpm db:generate`             | 修改 `src/db/schema.ts` 后生成迁移文件   |
+| `pnpm seed:demo`               | 生成示例内容                             |
+| `pnpm reset-admin`             | 重置管理员账号（`--2fa` 只关闭两步验证） |

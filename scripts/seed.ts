@@ -1,5 +1,5 @@
 /**
- * 示例内容（可选）：npm run seed:demo
+ * 示例内容（可选）：pnpm seed:demo
  * 生成几篇带封面的文章、分类、标签、关于页、说说与友链，方便本地预览效果。
  */
 import { count, eq } from "drizzle-orm";

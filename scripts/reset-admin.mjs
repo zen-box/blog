@@ -1,11 +1,11 @@
 // 忘记密码、或者丢了两步验证的手机时使用。文章等内容不受影响。
 //
 // 重置管理员：删除管理员账号与登录状态，之后打开 /admin 会重新出现“创建管理员”页面
-//   本地：npm run reset-admin
+//   本地：pnpm reset-admin
 //   Docker：docker compose exec blog node reset-admin.mjs
 //
 // 只关闭两步验证（保留账号和密码）：加上 --2fa
-//   本地：npm run reset-admin -- --2fa
+//   本地：pnpm reset-admin --2fa
 //   Docker：docker compose exec blog node reset-admin.mjs --2fa
 import crypto from "node:crypto";
 import fs from "node:fs";
