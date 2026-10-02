@@ -1686,6 +1686,23 @@
   }
 }
 
+/* 「继续阅读」跳回来时，那一段闪一下 */
+.prose-blog [data-resume] {
+  animation: resume-flash 2.4s ease-out;
+}
+@keyframes resume-flash {
+  0%,
+  35% {
+    background-color: color-mix(in oklab, var(--ochre) 22%, transparent);
+    box-shadow: 0 0 0 0.4rem color-mix(in oklab, var(--ochre) 22%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prose-blog [data-resume] {
+    animation: none;
+  }
+}
+
 /* 文字差异（版本历史、AI 建议共用）：绿色是新增，红色删除线是删掉的文字。 */
 :root {
   --diff-add: #2e6a48;

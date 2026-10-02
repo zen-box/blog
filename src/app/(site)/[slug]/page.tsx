@@ -23,6 +23,19 @@ export async function generateMetadata({ params }: PageProps<"/[slug]">): Promis
     title: page.title,
     description: page.seoDescription || page.excerpt || page.summary || undefined,
     alternates: { canonical: `/${page.slug}` },
+    openGraph: {
+      type: "article",
+      title: page.title,
+      images: [
+        {
+          url: `/og/post/${page.id}?v=${page.updatedAt.getTime()}`,
+          width: 1200,
+          height: 630,
+          alt: page.title,
+        },
+      ],
+    },
+    twitter: { card: "summary_large_image" },
   };
 }
 

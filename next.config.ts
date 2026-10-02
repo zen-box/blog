@@ -8,11 +8,13 @@ const nextConfig: NextConfig = {
   // - better-sqlite3 在运行时拼接路径加载二进制
   // - sharp 的原生模块依赖同目录及 @img/sharp-libvips-* 中的动态库
   // - 数据库迁移文件
+  // - 分享图用的中文字体
   outputFileTracingIncludes: {
     "/**": [
       "./node_modules/better-sqlite3/prebuilds/linux*.node",
       "./node_modules/@img/**/*",
       "./drizzle/**/*",
+      "./assets/fonts/*.woff",
     ],
   },
   poweredByHeader: false,

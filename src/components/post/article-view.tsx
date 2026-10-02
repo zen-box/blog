@@ -8,8 +8,12 @@ import type { AdjacentPost, PostDetail } from "@/server/posts";
 import { resolveUploadUrl } from "@/server/storage";
 import { getPublicPostAudio } from "@/server/post-audio";
 import { getPublishedReaderInsights } from "@/server/reader-ai";
+import { getSeriesForPost } from "@/server/series";
 
 import { ListenBar } from "./listen-bar";
+import { QuoteSelection } from "./quote-selection";
+import { ReadingResume } from "./reading-resume";
+import { SeriesCard, SeriesNext } from "./series-card";
 import { ReaderInsightsCard } from "./reader-insights";
 
 import { Comments } from "./comments";
@@ -34,6 +38,12 @@ export function ArticleView({
   const toc = post.toc ?? [];
   const showComments = post.allowComments || total > 0;
   const audios = isPage ? [] : getPublicPostAudio(post.id, post.content);
+  const inSeries = isPage ? null : getSeriesForPost(post.id);
+  const series = inSeries && {
+    name: inSeries.name,
+    slug: inSeries.slug,
+    posts: inSeries.posts.map(({ id, title, slug }) => ({ id, title, slug })),
+  };
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -70,6 +80,7 @@ export function ArticleView({
         <div className="mx-auto mt-12 grid w-full max-w-[82rem] grid-cols-1 px-5 sm:mt-14 md:px-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)] xl:gap-14">
           <div aria-hidden className="hidden xl:block" />
           <div className="mx-auto w-full max-w-[42rem] min-w-0">
+            {series && <SeriesCard series={series} currentId={post.id} />}
             {!isPage && (
               <ReaderInsightsCard
                 key={post.content}
@@ -79,6 +90,7 @@ export function ArticleView({
             <div data-article-body>
               <PostContent html={withLinkCards(post.html)} />
             </div>
+            {series && <SeriesNext series={series} currentId={post.id} />}
           </div>
           <aside className="hidden xl:block">
             <Toc items={toc} />
@@ -103,6 +115,10 @@ export function ArticleView({
       )}
 
       <MobileToc items={toc} />
+      {!isPage && (
+        <QuoteSelection title={post.title} author={s.authorName} site={s.siteTitle} url={url} />
+      )}
+      {!isPage && post.readingTime >= 3 && <ReadingResume postId={post.id} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}

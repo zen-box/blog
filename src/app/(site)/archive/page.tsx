@@ -7,12 +7,14 @@ import { PageView } from "@/components/site/page-view";
 import { PostLink } from "@/components/site/post-link";
 import { formatDateISO, formatMonthDay } from "@/lib/format";
 import { getArchive, getSiteStats } from "@/server/posts";
+import { listPublicSeries } from "@/server/series";
 
 export const metadata: Metadata = { title: "归档", alternates: { canonical: "/archive" } };
 
 export default function ArchivePage() {
   const { years, total } = getArchive();
   const stats = getSiteStats();
+  const seriesCount = listPublicSeries().length;
 
   return (
     <PageView>
@@ -42,6 +44,14 @@ export default function ArchivePage() {
           >
             标签 · {stats.tagCount}
           </Link>
+          {seriesCount > 0 && (
+            <Link
+              href="/series"
+              className="rounded-full border border-border px-4 py-1.5 text-muted-foreground transition-colors hover:border-foreground/25 hover:text-foreground"
+            >
+              系列 · {seriesCount}
+            </Link>
+          )}
         </div>
       </PageHeader>
 

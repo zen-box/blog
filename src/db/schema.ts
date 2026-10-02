@@ -411,3 +411,4 @@ export type Moment = typeof moments.$inferSelect;
 export type Media = typeof media.$inferSelect;
 
 export { musicTracks } from "./music-schema";
+export { series, seriesPosts } from "./series-schema";

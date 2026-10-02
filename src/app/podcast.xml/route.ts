@@ -16,7 +16,8 @@ export async function GET() {
   const s = getSettings();
   const base = siteUrl();
   const episodes = listPodcastEpisodes();
-  const cover = s.logo ? absoluteUrl(resolveUploadUrl(s.logo)) : "";
+  // 播客应用要求方形大图：有 Logo 用 Logo，否则用生成的封面
+  const cover = s.logo ? absoluteUrl(resolveUploadUrl(s.logo)) : `${base}/og/podcast`;
 
   const items = episodes
     .map(({ post, kind, url, size, duration }) => {

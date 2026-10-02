@@ -16,6 +16,7 @@ import {
   PenLineIcon,
   SettingsIcon,
   SparklesIcon,
+  LibraryBigIcon,
   TagsIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -77,6 +78,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
       { title: "页面", href: "/admin/pages", icon: PanelsTopLeftIcon },
       { title: "说说", href: "/admin/moments", icon: FeatherIcon },
       { title: "分类与标签", href: "/admin/taxonomy", icon: TagsIcon },
+      { title: "系列", href: "/admin/series", icon: LibraryBigIcon },
     ],
   },
   {
@@ -107,6 +109,7 @@ const TITLES: [RegExp, string][] = [
   [/^\/admin\/pages/, "页面"],
   [/^\/admin\/moments/, "说说"],
   [/^\/admin\/taxonomy/, "分类与标签"],
+  [/^\/admin\/series/, "系列"],
   [/^\/admin\/comments/, "评论"],
   [/^\/admin\/links/, "友链"],
   [/^\/admin\/media/, "媒体库"],

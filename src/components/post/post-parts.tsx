@@ -17,6 +17,7 @@ import type { AdjacentPost, PostDetail } from "@/server/posts";
 import { resolveUploadUrl } from "@/server/storage";
 
 import { LikeButton } from "./like-button";
+import { PosterButton } from "./poster-button";
 import { ShareButton } from "./share-button";
 import { ViewCounter } from "./view-counter";
 
@@ -130,6 +131,15 @@ export function PostFooter({
       <div className="flex items-center justify-center gap-3">
         <LikeButton postId={post.id} initial={post.likes} />
         <ShareButton title={post.title} />
+        <PosterButton
+          title={post.title}
+          excerpt={post.excerpt || post.summary || ""}
+          cover={post.cover ? resolveUploadUrl(post.cover) : undefined}
+          meta={[post.category?.name, formatDate(post.publishedAt)].filter(Boolean).join(" · ")}
+          author={settings.authorName}
+          site={settings.siteTitle}
+          url={url}
+        />
       </div>
 
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card px-5 py-4 text-[0.82rem] leading-7 text-muted-foreground sm:px-6">

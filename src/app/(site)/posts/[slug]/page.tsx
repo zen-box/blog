@@ -4,7 +4,6 @@ import { cache } from "react";
 
 import { ArticleView } from "@/components/post/article-view";
 import { getAdjacentPosts, getPublishedPost, getRelatedPosts } from "@/server/posts";
-import { resolveUploadUrl } from "@/server/storage";
 
 const safeDecode = (s: string) => {
   try {
@@ -21,6 +20,13 @@ export async function generateMetadata({ params }: PageProps<"/posts/[slug]">): 
   const post = await loadPost(slug);
   if (!post) return { title: "文章不存在" };
   const description = post.seoDescription || post.excerpt || post.summary || undefined;
+  // 分享图：标题、封面和站点标识合成一张，地址带更新时间
+  const image = {
+    url: `/og/post/${post.id}?v=${post.updatedAt.getTime()}`,
+    width: 1200,
+    height: 630,
+    alt: post.title,
+  };
   return {
     title: post.title,
     description,
@@ -33,9 +39,9 @@ export async function generateMetadata({ params }: PageProps<"/posts/[slug]">): 
       publishedTime: post.publishedAt?.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
       tags: post.tags.map((t) => t.name),
-      images: post.cover ? [{ url: resolveUploadUrl(post.cover) }] : undefined,
+      images: [image],
     },
-    twitter: { card: post.cover ? "summary_large_image" : "summary" },
+    twitter: { card: "summary_large_image", images: [image] },
   };
 }
 

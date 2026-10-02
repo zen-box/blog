@@ -44,7 +44,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: s.siteTitle,
       description: s.siteDescription,
       locale: "zh_CN",
+      images: [{ url: "/og/site", width: 1200, height: 630, alt: s.siteTitle }],
     },
+    twitter: { card: "summary_large_image", images: ["/og/site"] },
     icons: {
       icon: [{ url: `/site-icon?v=${v}`, type: ICON_MIME[kind] }],
       apple: kind === "raster" || kind === "svg" ? [{ url: `/site-icon/apple?v=${v}` }] : undefined,
