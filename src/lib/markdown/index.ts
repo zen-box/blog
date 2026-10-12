@@ -51,7 +51,7 @@ import { rehypeSpeech } from "./speech";
 import { remarkTerminal } from "./terminal";
 
 /** 渲染管线版本：修改管线后递增，旧文章会在访问或后台操作时重新渲染 */
-export const RENDER_VERSION = 6;
+export const RENDER_VERSION = 7;
 
 export function thumbhashToDataUrl(b64: string): string | undefined {
   try {

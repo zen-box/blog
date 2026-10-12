@@ -159,7 +159,7 @@ function materialize(n: RootContent): RootContent {
 }
 
 /** 链接段落：只有一个链接，或者「报告链接：https://…」这样的来源说明 */
-function isLinkParagraph(n: RootContent): boolean {
+export function isLinkParagraph(n: RootContent): boolean {
   if (n.type !== "paragraph") return false;
   const parts = n.children.filter(
     (c) => !(c.type === "text" && !c.value.trim()) && c.type !== "break",

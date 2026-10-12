@@ -20,7 +20,28 @@ const FOOTER_RULE = /^\s*={20,}\s*$/;
 
 export const isRule = (line: string) => RULE.test(line);
 
-export type Banner = { start: number; end: number; kind: ReportKind; title: string };
+type IpFamily = "v4" | "v6";
+
+export type Banner = {
+  start: number;
+  end: number;
+  kind: ReportKind;
+  title: string;
+  /** 报告检测的是 IPv4 还是 IPv6 地址（双栈机器两种各出一份） */
+  family: IpFamily | null;
+};
+
+const ANSI_CODES = /\u001b\[[0-9;?]*[A-Za-z]|\\?\[(?:\d{1,3};)*\d{1,3}m/g;
+
+/** 横幅里「…报告：162.35.*.*」「…报告(Lite)：2605:52c0:*:*」这类打码地址的类型 */
+function familyOf(body: string[]): IpFamily | null {
+  const text = body.join("\n").replace(ANSI_CODES, "");
+  const addr = /(?:报告|Report)[^\n：:]*[：:]\s*(\S+)/i.exec(text)?.[1] ?? "";
+  if (/^[\da-f*]{1,4}(?::[\da-f*]{0,4}){2,}/i.test(addr)) return "v6";
+  if (/^\d{1,3}\.[\d*]{1,3}\.[\d*]{1,3}\.[\d*]{1,3}/.test(addr)) return "v4";
+  if (/IPv6/i.test(text)) return "v6";
+  return null;
+}
 
 /** 第 i 行开始的报告横幅：分隔线、若干行标题、同样字符的分隔线 */
 export function bannerAt(lines: readonly string[], i: number): Banner | null {
@@ -32,7 +53,7 @@ export function bannerAt(lines: readonly string[], i: number): Banner | null {
     if (close[1] !== open[1]) return null;
     const body = lines.slice(i + 1, j);
     if (!SIGNATURE.test(body.join("\n"))) return null;
-    return { start: i, end: j + 1, ...classify(body) };
+    return { start: i, end: j + 1, ...classify(body), family: familyOf(body) };
   }
   return null;
 }
@@ -122,7 +143,7 @@ export function splitReport(text: string): ReportSection[] {
     return [{ kind: "generic", label: "", title: "", text: trimBlankLines(lines).join("\n") }];
   }
 
-  const sections: ReportSection[] = [];
+  const sections: (ReportSection & { family: IpFamily | null })[] = [];
   let carry: string[] = trimBlankLines(lines.slice(0, banners[0].start));
   banners.forEach((b, k) => {
     const body = lines.slice(b.start, banners[k + 1]?.start ?? lines.length);
@@ -145,8 +166,32 @@ export function splitReport(text: string): ReportSection[] {
       label: LABELS[kind] || title,
       title,
       text: trimBlankLines([...carry, ...body]).join("\n"),
+      family: b.family,
     });
     carry = [];
   });
-  return sections;
+  return distinctLabels(sections);
+}
+
+/**
+ * 双栈机器的 IP 质量、网络质量、回程路由会各测一次 IPv4 和 IPv6，
+ * 标签页名字加上 v4 / v6 区分；认不出地址类型时按出现顺序编号。
+ */
+function distinctLabels(sections: (ReportSection & { family: IpFamily | null })[]) {
+  const kinds = new Map<ReportKind, number>();
+  for (const s of sections) kinds.set(s.kind, (kinds.get(s.kind) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  return sections.map(({ family, ...s }) => {
+    if ((kinds.get(s.kind) ?? 0) > 1 && family) {
+      s.label = `${s.label} ${family}`;
+      s.title = `${s.title} ${family}`;
+    }
+    const n = (seen.get(s.label) ?? 0) + 1;
+    seen.set(s.label, n);
+    if (n > 1) {
+      s.label = `${s.label} ${n}`;
+      s.title = `${s.title} ${n}`;
+    }
+    return s;
+  });
 }

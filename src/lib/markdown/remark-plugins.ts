@@ -7,7 +7,7 @@ import { SKIP, visit } from "unist-util-visit";
 import type { VFile } from "vfile";
 
 import { icon } from "./icons";
-import { TAB_NAMES, TABS_NAMES } from "./terminal";
+import { isLinkParagraph, TAB_NAMES, TABS_NAMES } from "./terminal";
 
 /* ------------------------------------------------------------------ */
 /* 工具                                                                  */
@@ -547,6 +547,7 @@ export function countWords(text: string) {
   return { cjk, words };
 }
 
+/** 摘要用的纯文字：不含代码、HTML 和公式 */
 function plainText(nodes: RootContent[]): string {
   return nodes
     .filter((n) => n.type !== "code" && n.type !== "html" && n.type !== "math")
@@ -554,6 +555,37 @@ function plainText(nodes: RootContent[]): string {
     .join("\n")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/** 图表的配置和语法不算字数 */
+const CHART_LANGS = new Set(["mermaid", "chart", "echarts"]);
+/** 终端输出里的 ANSI 颜色代码（包括导入时丢了 ESC 的残留，如 [1;36m） */
+const ANSI_CODES = /\u001b\[[0-9;?]*[A-Za-z]|\[(?:\d{1,3};)*\d{1,3}m/g;
+
+/**
+ * 统计字数用的文字，分成正文和代码两份：代码块、终端输出也算字数
+ * （测评文章的主体就是粘贴进来的报告），但读起来是扫读，阅读时长按一半算。
+ */
+function countableText(node: Root | RootContent, out: { prose: string[]; code: string[] }) {
+  switch (node.type) {
+    case "html":
+    case "math":
+    case "inlineMath":
+      return;
+    case "code":
+      if (!CHART_LANGS.has((node.lang ?? "").toLowerCase())) {
+        out.code.push(node.value.replace(ANSI_CODES, " "));
+      }
+      return;
+    case "image":
+    case "imageReference":
+      if (node.alt) out.prose.push(node.alt);
+      return;
+  }
+  if ("value" in node && typeof node.value === "string") out.prose.push(node.value);
+  else if ("children" in node) {
+    for (const child of node.children as RootContent[]) countableText(child, out);
+  }
 }
 
 function clip(text: string, max = 160): string {
@@ -564,20 +596,27 @@ function clip(text: string, max = 160): string {
 /** 放在管线最前面：统计字数、生成摘要（支持 Hexo 风格的 <!-- more -->） */
 export function remarkStats() {
   return (tree: Root, file: VFile) => {
-    const text = plainText(tree.children);
-    const { cjk, words } = countWords(text);
-    const minutes = Math.max(1, Math.round(cjk / 400 + words / 200));
+    const parts = { prose: [] as string[], code: [] as string[] };
+    countableText(tree, parts);
+    const prose = countWords(parts.prose.join(" "));
+    const code = countWords(parts.code.join(" "));
+    const minutes = Math.max(
+      1,
+      Math.round(prose.cjk / 400 + prose.words / 200 + (code.cjk / 400 + code.words / 200) / 2),
+    );
+    const wordCount = prose.cjk + prose.words + code.cjk + code.words;
 
     const moreIndex = tree.children.findIndex(
       (n) => n.type === "html" && /<!--\s*more\s*-->/i.test(n.value),
     );
+    // 只有一个来源链接的段落（如测评报告后面的「NodeQuality链接」）不当摘要
     const head =
       moreIndex >= 0
         ? tree.children.slice(0, moreIndex)
-        : tree.children.filter((n) => n.type === "paragraph");
+        : tree.children.filter((n) => n.type === "paragraph" && !isLinkParagraph(n));
     const excerpt = moreIndex >= 0 ? plainText(head) : clip(plainText(head));
 
-    file.data.stats = { wordCount: cjk + words, readingTime: minutes, excerpt } satisfies TextStats;
+    file.data.stats = { wordCount, readingTime: minutes, excerpt } satisfies TextStats;
   };
 }
 

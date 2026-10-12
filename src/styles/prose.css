@@ -24,13 +24,6 @@
     text-spacing-trim: space-all;
   }
 
-  .prose-blog > :first-child {
-    margin-top: 0;
-  }
-  .prose-blog > :last-child {
-    margin-bottom: 0;
-  }
-
   .prose-blog :where(p) {
     margin: 1.15em 0;
   }
@@ -1604,6 +1597,17 @@
   }
   .prose-blog .md-directive {
     margin: 1.2em 0;
+  }
+
+  /*
+   * 首尾元素不留外边距。放在各类块（标签页、终端、提示框……）的规则之后，
+   * 同等优先级下靠顺序胜出：文章直接以报告或标签页开头时，上方不会多出一截空白。
+   */
+  .prose-blog > :first-child {
+    margin-top: 0;
+  }
+  .prose-blog > :last-child {
+    margin-bottom: 0;
   }
 }
 
