@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "../styles/prose.css";
 @import "../styles/transitions.css";
+@import "../styles/loading.css";
 
 @custom-variant dark (&:is(.dark *));
 

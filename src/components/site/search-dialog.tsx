@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
+import { signalNavigation } from "@/components/loading/nav-progress";
 import { cn } from "@/lib/utils";
 
 export type SearchHit = {
@@ -142,7 +143,9 @@ function SearchDialog({
   function go(hit: SearchHit | undefined) {
     if (!hit) return;
     onOpenChange(false);
-    router.push(`/posts/${hit.slug}`);
+    const href = `/posts/${hit.slug}`;
+    if (href !== location.pathname) signalNavigation();
+    router.push(href);
   }
 
   function onKeyDown(e: React.KeyboardEvent) {

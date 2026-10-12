@@ -1,3 +1,4 @@
+import { NavProgress } from "@/components/loading/nav-progress";
 import { MotionProvider } from "@/components/motion/motion-provider";
 import { NavigationTracker } from "@/components/motion/navigation-state";
 import { getSettings } from "@/lib/settings";
@@ -17,6 +18,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
   return (
     <MotionProvider>
       <div aria-hidden className="paper-grain" />
+      <NavProgress />
       <SiteHeader />
       <main className="min-h-[72vh]">{children}</main>
       <SiteFooter />

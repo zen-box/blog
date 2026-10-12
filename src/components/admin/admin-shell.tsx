@@ -22,6 +22,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
+import { NavProgress } from "@/components/loading/nav-progress";
 import { Seal } from "@/components/site/seal";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import {
@@ -154,6 +155,7 @@ export function AdminShell({
   return (
     <TooltipProvider delay={300}>
       <ConfirmProvider>
+        <NavProgress />
         <SidebarProvider defaultOpen={defaultOpen}>
           <Sidebar variant="inset" collapsible="icon">
             <SidebarHeader>

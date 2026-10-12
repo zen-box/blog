@@ -1,0 +1,98 @@
+/*
+ * 加载状态
+ * - 顶部细进度线：站内跳转超过 0.12 秒才淡入，落地后走满再收起
+ * - 骨架：按目标页面的版式画出墨色占位，加载稍慢时才逐行淡入，
+ *   跳转很快时什么都不出现，由页面转场直接接上
+ */
+
+/* ---------- 顶部进度线 ---------- */
+.nav-progress {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 60;
+  height: 2px;
+  pointer-events: none;
+  opacity: 0;
+  /* 跳转时盖住文章页原有的阅读进度条 */
+  background: var(--background);
+}
+
+.nav-progress-bar {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--brand) 20%, transparent),
+    var(--brand) 55%
+  );
+  will-change: transform;
+}
+
+/* 线头一点柔光 */
+.nav-progress-bar::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: 0;
+  width: 6rem;
+  height: 6px;
+  background: radial-gradient(
+    closest-side at 90% 50%,
+    color-mix(in oklab, var(--brand) 45%, transparent),
+    transparent
+  );
+  filter: blur(1.5px);
+}
+
+/* ---------- 骨架 ---------- */
+
+/* 墨色占位；一道柔光从左到右扫过，所有占位共用同一道光 */
+.sk {
+  --sk-base: color-mix(in oklab, var(--foreground) 5.5%, transparent);
+  --sk-glint: color-mix(in oklab, var(--card) 62%, transparent);
+  display: block;
+  background-color: var(--sk-base);
+  background-image: linear-gradient(105deg, transparent 42%, var(--sk-glint) 50%, transparent 58%);
+  background-repeat: no-repeat;
+  background-size: 200vw 100%;
+  background-attachment: fixed;
+  animation: sk-sweep 2.8s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+.dark .sk {
+  --sk-base: color-mix(in oklab, var(--foreground) 7%, transparent);
+  --sk-glint: color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+/* 逐行淡入：整体先等一小会儿，i 越大越晚出现 */
+.sk-row {
+  animation: sk-in 560ms ease both;
+  animation-delay: calc(var(--sk-delay, 260ms) + var(--i, 0) * 60ms);
+}
+
+@keyframes sk-sweep {
+  from {
+    background-position: -140vw 0;
+  }
+  to {
+    background-position: 60vw 0;
+  }
+}
+
+@keyframes sk-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk {
+    animation: none;
+    background-image: none;
+  }
+  .sk-row {
+    animation-duration: 160ms;
+  }
+}

@@ -1,1 +1,1 @@
-export { PagePending as default } from "@/components/site/page-pending";
+export { SitePending as default } from "@/components/loading/site-pending";
