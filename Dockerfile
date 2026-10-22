@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # ---------- 基础：Node.js + pnpm ----------
-FROM node:24-bookworm-slim AS base
+# Node 补丁版本刻意钉死：浮动的 24-bookworm-slim 会让同一个 commit 在不同时间构建出不同运行时。
+# 24.22.1 是安全版本（修复 7 个 CVE，含 4 个 High）。改这里时同步 .nvmrc 和 package.json 的 engines。
+FROM node:24.22.1-bookworm-slim AS base
 WORKDIR /app
 # 国内服务器可以用镜像源加速：docker compose build --build-arg NPM_REGISTRY=https://registry.npmmirror.com
 ARG NPM_REGISTRY=https://registry.npmjs.org
@@ -25,7 +27,7 @@ COPY . .
 RUN pnpm run build
 
 # ---------- 运行 ----------
-FROM node:24-bookworm-slim AS runner
+FROM node:24.22.1-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
