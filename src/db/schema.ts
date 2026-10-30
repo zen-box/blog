@@ -372,6 +372,12 @@ export const pathStats = sqliteTable(
   (t) => [primaryKey({ columns: [t.date, t.path] }), index("path_stats_path_idx").on(t.path)],
 );
 
+/** server-init.sh 下载次数，按站点时区保存每日汇总 */
+export const scriptDownloads = sqliteTable("script_downloads", {
+  date: text("date").primaryKey(),
+  count: integer("count").notNull().default(0),
+});
+
 /** 点赞去重：每位访客对每篇文章只计一次 */
 export const postLikes = sqliteTable(
   "post_likes",

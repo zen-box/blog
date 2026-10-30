@@ -42,6 +42,9 @@ export function SiteFooter() {
             <span>
               © {startYear && startYear < year ? `${startYear}–${year}` : year} {s.siteTitle}
             </span>
+            <Link href="/server-init" className="transition-colors hover:text-muted-foreground">
+              Linux 服务器脚本
+            </Link>
             {days !== null && <span>已运行 {days.toLocaleString("zh-CN")} 天</span>}
             {s.icp && (
               <a

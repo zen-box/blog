@@ -7,7 +7,7 @@ import { dayKey } from "@/lib/format";
 
 import { isBot, visitorHash } from "./request";
 
-const { dailyStats, visitors, pathStats, posts, postLikes } = schema;
+const { dailyStats, visitors, pathStats, posts, postLikes, scriptDownloads } = schema;
 
 let lastCleanup = "";
 
@@ -121,4 +121,31 @@ export function getTotals() {
     .from(dailyStats)
     .get();
   return { todayPv: t?.pv ?? 0, todayUv: t?.uv ?? 0, totalPv: all?.pv ?? 0, totalUv: all?.uv ?? 0 };
+}
+
+/** 记录一次 server-init.sh 下载，并返回今日与累计次数。 */
+export function trackScriptDownload() {
+  const date = dayKey();
+  db.insert(scriptDownloads)
+    .values({ date, count: 1 })
+    .onConflictDoUpdate({
+      target: scriptDownloads.date,
+      set: { count: sql`${scriptDownloads.count} + 1` },
+    })
+    .run();
+  return getScriptUsage();
+}
+
+export function getScriptUsage() {
+  const today = dayKey();
+  const todayRow = db
+    .select({ count: scriptDownloads.count })
+    .from(scriptDownloads)
+    .where(eq(scriptDownloads.date, today))
+    .get();
+  const totalRow = db
+    .select({ count: sql<number>`coalesce(sum(${scriptDownloads.count}), 0)` })
+    .from(scriptDownloads)
+    .get();
+  return { today: todayRow?.count ?? 0, total: totalRow?.count ?? 0 };
 }

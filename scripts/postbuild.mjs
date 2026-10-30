@@ -7,4 +7,6 @@ if (!fs.existsSync(out)) process.exit(0);
 fs.cpSync(".next/static", `${out}/.next/static`, { recursive: true });
 if (fs.existsSync("public")) fs.cpSync("public", `${out}/public`, { recursive: true });
 fs.cpSync("scripts/reset-admin.mjs", `${out}/reset-admin.mjs`);
+fs.mkdirSync(`${out}/scripts`, { recursive: true });
+fs.cpSync("scripts/server-init.sh", `${out}/scripts/server-init.sh`);
 console.log("standalone 产物已就绪：node .next/standalone/server.js");
